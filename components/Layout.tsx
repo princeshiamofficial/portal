@@ -14,6 +14,18 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, onLogout }) => {
   const [showDisabledModal, setShowDisabledModal] = useState(user.status === 'disabled');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar_collapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev: boolean) => {
+      const newState = !prev;
+      localStorage.setItem('sidebar_collapsed', JSON.stringify(newState));
+      return newState;
+    });
+  };
 
   return (
     <div className="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-sans relative selection:bg-red-500/20">
@@ -26,13 +38,14 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
       <Sidebar
         user={user}
         onLogout={onLogout}
-        activeView={activeView}
-        setView={setView}
+        activeView={activeView} // This prop might not be needed if using NavLink but kept for compatibility if needed
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        toggleCollapse={toggleSidebarCollapse}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300`}>
         {/* Mobile Floating Header - Eye Catching */}
         <header className="lg:hidden fixed top-4 left-4 right-4 z-[50] bg-white/70 backdrop-blur-xl border border-white/40 px-6 py-4 rounded-[2.2rem] flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-2">

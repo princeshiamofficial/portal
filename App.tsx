@@ -6,7 +6,7 @@ import Customers from './components/Customers';
 import Templates from './components/Templates';
 import Devices from './components/Devices';
 import Broadcast from './components/Broadcast';
-import { View, User, Customer, Template, WhatsAppSession, BroadcastContact, BroadcastStats } from './types.ts';
+import { View, User, Customer, Template, WhatsAppSession, BroadcastContact, BroadcastStats, SpecialCampaignSettings } from './types.ts';
 
 import Dashboard from './components/Dashboard';
 import SpecialCampaign from './components/SpecialCampaign';
@@ -28,6 +28,8 @@ const AppContent: React.FC<{
   onStartBroadcast: (tid: number) => void;
   onImportCSV: (f: File) => void;
   isSending: boolean;
+  campaignSettings: SpecialCampaignSettings;
+  onUpdateCampaignSettings: (settings: SpecialCampaignSettings) => void;
 }> = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,7 +98,18 @@ const AppContent: React.FC<{
             sending={props.isSending}
           />
         } />
-        <Route path="/special-campaign" element={<SpecialCampaign />} />
+        <Route path="/special-campaign" element={
+          <SpecialCampaign
+            templates={props.templates}
+            settings={props.campaignSettings}
+            onUpdateSettings={props.onUpdateCampaignSettings}
+            customers={props.customers}
+            onRunManual={(tid, cids) => {
+              // Logic to run for specific customers if needed
+              console.log('Running manual campaign', tid, cids);
+            }}
+          />
+        } />
         <Route path="/insights" element={
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
             <i className="fa-solid fa-wand-magic-sparkles text-6xl mb-4 opacity-20"></i>
@@ -156,9 +169,18 @@ const App: React.FC = () => {
       name: "Emma Wilson",
       occupation: "Interior Designer",
       dob: "30 Nov, 1990",
-      anniversaryDate: "10 Dec, 2020",
+      anniversaryDate: "26 Jan, 2020",
       address: "42 Pine Street, Portland, OR",
       whatsapp: "+1 (555) 234-5678"
+    },
+    {
+      id: 5,
+      customer_id: "CUST-005",
+      name: "Jamie Test",
+      occupation: "Tester",
+      dob: "26 Jan, 1995",
+      address: "123 Test Lane",
+      whatsapp: "+1 (555) 000-0000"
     }
   ]);
 
@@ -195,12 +217,26 @@ const App: React.FC = () => {
   const [broadcastContacts, setBroadcastContacts] = useState<BroadcastContact[]>([]);
   const [broadcastStats, setBroadcastStats] = useState<BroadcastStats>({ totalSentToday: 1242 });
   const [isSending, setIsSending] = useState(false);
+  const [campaignSettings, setCampaignSettings] = useState<SpecialCampaignSettings>({
+    birthdayTemplateId: null,
+    birthdayActive: false,
+    anniversaryTemplateId: null,
+    anniversaryActive: false
+  });
 
   // Persist user session to localStorage (simple)
   useEffect(() => {
     const savedUser = localStorage.getItem('fm_user');
     if (savedUser) setUser(JSON.parse(savedUser));
+
+    const savedSettings = localStorage.getItem('fm_campaign_settings');
+    if (savedSettings) setCampaignSettings(JSON.parse(savedSettings));
   }, []);
+
+  const handleUpdateCampaignSettings = (settings: SpecialCampaignSettings) => {
+    setCampaignSettings(settings);
+    localStorage.setItem('fm_campaign_settings', JSON.stringify(settings));
+  };
 
   const handleLogin = (email: string, storeName: string) => {
     setLoading(true);
@@ -316,6 +352,49 @@ const App: React.FC = () => {
     })));
   }, [customers]);
 
+  // Auto-run special campaigns check
+  useEffect(() => {
+    if (!wa || wa.status !== 'connected') return;
+
+    const checkCelebrations = async () => {
+      const today = new Date();
+      // Format to "DD Month" e.g. "26 January" or "26 Jan"
+      const day = today.getDate().toString().padStart(2, '0');
+      const month = today.toLocaleString('en-GB', { month: 'short' });
+      const todayStr = `${day} ${month}`; // "26 Jan"
+
+      const birthdayTemplate = campaignSettings.birthdayActive ? templates.find(t => t.id === campaignSettings.birthdayTemplateId) : null;
+      const anniversaryTemplate = campaignSettings.anniversaryActive ? templates.find(t => t.id === campaignSettings.anniversaryTemplateId) : null;
+
+      let sentCount = 0;
+
+      for (const customer of customers) {
+        // Birthday check
+        if (birthdayTemplate && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
+          console.log(`Auto-sending Birthday wish to ${customer.name}`);
+          sentCount++;
+          // Simulate WhatsApp send delay
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // Anniversary check
+        if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
+          console.log(`Auto-sending Anniversary wish to ${customer.name}`);
+          sentCount++;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      if (sentCount > 0) {
+        setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + sentCount }));
+        // In a real app we'd prevent re-sending the same day
+      }
+    };
+
+    // Run check once on connect or settings change
+    checkCelebrations();
+  }, [wa.status, campaignSettings, customers, templates]);
+
   return (
     <Router>
       <AppContent
@@ -334,6 +413,8 @@ const App: React.FC = () => {
         onStartBroadcast={handleStartBroadcast}
         onImportCSV={handleImportCSV}
         isSending={isSending}
+        campaignSettings={campaignSettings}
+        onUpdateCampaignSettings={handleUpdateCampaignSettings}
       />
     </Router>
   );

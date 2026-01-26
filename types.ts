@@ -54,3 +54,9 @@ export interface BroadcastContact {
 export interface BroadcastStats {
     totalSentToday: number;
 }
+export interface SpecialCampaignSettings {
+    birthdayTemplateId: number | null;
+    birthdayActive: boolean;
+    anniversaryTemplateId: number | null;
+    anniversaryActive: boolean;
+}
