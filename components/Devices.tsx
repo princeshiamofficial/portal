@@ -60,7 +60,7 @@ const Devices: React.FC<DevicesProps> = ({ wa, onConnect, onLogout }) => {
                             <span className="px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">Active</span>
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 mb-1">
-                            {wa.user?.name || formattedNumber(wa.user?.id) || 'WhatsApp User'}
+                            {wa.user?.name || formattedNumber(wa.user?.id)}
                         </h3>
                         <p className="text-slate-400 text-sm font-medium mb-6">
                             {formattedNumber(wa.user?.id)}

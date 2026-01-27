@@ -15,6 +15,7 @@ export interface User {
     email: string;
     role: string;
     status?: string;
+    instanceId?: string;
 }
 
 export interface Customer {
@@ -54,9 +55,17 @@ export interface BroadcastContact {
 export interface BroadcastStats {
     totalSentToday: number;
 }
+export interface ScheduledCampaign {
+    id: number;
+    templateId: number;
+    scheduledTime: string; // ISO string
+    status: 'Pending' | 'Completed' | 'Cancelled';
+}
+
 export interface SpecialCampaignSettings {
     birthdayTemplateId: number | null;
     birthdayActive: boolean;
     anniversaryTemplateId: number | null;
     anniversaryActive: boolean;
+    scheduledCampaigns: ScheduledCampaign[];
 }

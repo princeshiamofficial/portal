@@ -132,86 +132,14 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Mock data for demonstration
-  const [customers] = useState<Customer[]>([
-    {
-      id: 1,
-      customer_id: "CUST-001",
-      name: "Alexander Pierce",
-      occupation: "Software Architect",
-      dob: "12 May, 1992",
-      anniversaryDate: "15 June, 2018",
-      address: "24 Carbon St, Silicon Valley, CA",
-      whatsapp: "+1 (555) 012-3456"
-    },
-    {
-      id: 2,
-      customer_id: "CUST-002",
-      name: "Sarah Jenkins",
-      occupation: "Marketing Director",
-      dob: "28 Feb, 1988",
-      anniversaryDate: "20 Sept, 2015",
-      address: "15 Golden Gate Ave, San Francisco, CA",
-      whatsapp: "+1 (555) 987-6543"
-    },
-    {
-      id: 3,
-      customer_id: "CUST-003",
-      name: "Michael Chen",
-      occupation: "Restaurant Owner",
-      dob: "05 Sept, 1995",
-      address: "88 Dragon Way, Seattle, WA",
-      whatsapp: "+1 (555) 456-7890"
-    },
-    {
-      id: 4,
-      customer_id: "CUST-004",
-      name: "Emma Wilson",
-      occupation: "Interior Designer",
-      dob: "30 Nov, 1990",
-      anniversaryDate: "26 Jan, 2020",
-      address: "42 Pine Street, Portland, OR",
-      whatsapp: "+1 (555) 234-5678"
-    },
-    {
-      id: 5,
-      customer_id: "CUST-005",
-      name: "Jamie Test",
-      occupation: "Tester",
-      dob: "26 Jan, 1995",
-      address: "123 Test Lane",
-      whatsapp: "+1 (555) 000-0000"
-    }
-  ]);
-
-  const [templates, setTemplates] = useState<Template[]>([
-    {
-      id: 1,
-      title: "Welcome Greeting",
-      content: "Hi [name], thank you for choosing FoodMode! How can we help you today?",
-      type: "System"
-    },
-    {
-      id: 2,
-      title: "Birthday Wish",
-      content: "Happy Birthday [name]! Enjoy a 20% discount on your next visit as a gift from us.",
-      type: "Promotion"
-    },
-    {
-      id: 3,
-      title: "Order Confirmation",
-      content: "Your order has been received, [name]. It will be ready in 20 minutes!",
-      type: "Personal"
-    }
-  ]);
+  // Data loaded from server on login
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
 
   const [wa, setWa] = useState<WhatsAppSession>({
-    status: 'connected', // Mock as connected initially for broadcast demo
+    status: 'disconnected',
     qr: null,
-    user: {
-      name: "Master Branch Admin",
-      id: "1234567890:1@s.whatsapp.net"
-    }
+    user: undefined
   });
 
   const [broadcastContacts, setBroadcastContacts] = useState<BroadcastContact[]>([]);
@@ -221,7 +149,8 @@ const App: React.FC = () => {
     birthdayTemplateId: null,
     birthdayActive: false,
     anniversaryTemplateId: null,
-    anniversaryActive: false
+    anniversaryActive: false,
+    scheduledCampaigns: []
   });
 
   // Persist user session to localStorage (simple)
@@ -233,21 +162,72 @@ const App: React.FC = () => {
     if (savedSettings) setCampaignSettings(JSON.parse(savedSettings));
   }, []);
 
+  // Data Loading Logic
+  const fetchData = async () => {
+    const token = localStorage.getItem('fm_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch('http://localhost:3000/api/data', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customers) setCustomers(data.customers);
+        if (data.templates) setTemplates(data.templates);
+        if (data.campaignSettings) setCampaignSettings(data.campaignSettings);
+      }
+    } catch (e) {
+      console.error("Failed to load data", e);
+    }
+  };
+
+  const saveData = async (key: string, value: any) => {
+    const token = localStorage.getItem('fm_token');
+    if (!token) return;
+
+    try {
+      await fetch('http://localhost:3000/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ [key]: value })
+      });
+    } catch (e) { console.error("Save failed", e); }
+  };
+
   const handleUpdateCampaignSettings = (settings: SpecialCampaignSettings) => {
     setCampaignSettings(settings);
+    // Persist to server
+    saveData('campaignSettings', settings);
     localStorage.setItem('fm_campaign_settings', JSON.stringify(settings));
   };
 
   const handleLogin = (email: string, storeName: string) => {
-    setLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
-      const newUser: User = { email, storeName, role: 'admin', status: 'active' };
-      setUser(newUser);
-      localStorage.setItem('fm_user', JSON.stringify(newUser));
-      setLoading(false);
-    }, 1000);
+    // In a real flow, auth component passes the full user object, but for now we reconstruct or re-fetch
+    const token = localStorage.getItem('fm_token');
+    // We assume the component or a separate fetch got us the user details roughly
+    const newUser: User = {
+      email,
+      storeName,
+      role: 'admin',
+      status: 'active',
+      // We could decode token to get instanceId if needed, or Auth passes it
+    };
+    setUser(newUser);
+    localStorage.setItem('fm_user', JSON.stringify(newUser));
+    setLoading(false);
+
+    // Load this tenant's data
+    fetchData();
   };
+
+  // Init data on load if user exists
+  useEffect(() => {
+    if (user) fetchData();
+  }, [user]);
 
   const handleLogout = () => {
     setUser(null);
@@ -255,46 +235,29 @@ const App: React.FC = () => {
   };
 
   const handleSaveTemplate = (template: Partial<Template>) => {
+    let newTemplates;
     if (template.id) {
-      setTemplates(templates.map(t => t.id === template.id ? { ...t, ...template } as Template : t));
+      newTemplates = templates.map(t => t.id === template.id ? { ...t, ...template } as Template : t);
     } else {
       const newTemplate: Template = {
-        id: templates.length + 1,
+        id: templates.length + 1, // Simple ID gen, conflict risk in real app
         title: template.title || '',
         content: template.content || '',
         type: template.type || 'Personal'
       };
-      setTemplates([...templates, newTemplate]);
+      newTemplates = [...templates, newTemplate];
     }
+    setTemplates(newTemplates);
+    saveData('templates', newTemplates);
   };
 
   const handleDeleteTemplate = (id: number) => {
-    setTemplates(templates.filter(t => t.id !== id));
+    const newTemplates = templates.filter(t => t.id !== id);
+    setTemplates(newTemplates);
+    saveData('templates', newTemplates);
   };
 
-  const handleConnectWA = () => {
-    setWa({ status: 'connecting', qr: null });
-    // Simulate QR generation
-    setTimeout(() => {
-      setWa({
-        status: 'connecting',
-        qr: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=foodmode-wa-mock-connection'
-      });
 
-      // Simulate successful scan after 10 seconds
-      setTimeout(() => {
-        setWa({
-          status: 'connected',
-          qr: null,
-          user: { name: "John Admin", id: "1234567890:1@s.whatsapp.net" }
-        });
-      }, 8000);
-    }, 1500);
-  };
-
-  const handleLogoutWA = () => {
-    setWa({ status: 'none', qr: null });
-  };
 
   const handleImportCSV = (file: File) => {
     const reader = new FileReader();
@@ -314,28 +277,99 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
+  // Poll WhatsApp Status
+  useEffect(() => {
+    if (!user) return;
+    const poll = setInterval(async () => {
+      const token = localStorage.getItem('fm_token');
+      if (!token) return;
+      try {
+        const res = await fetch('http://localhost:3000/api/whatsapp/status', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setWa(prev => ({
+            ...prev,
+            status: data.status === 'connected' ? 'connected' : data.status === 'connecting' ? 'connecting' : 'none',
+            qr: data.qr,
+            user: data.user,
+          }));
+        }
+      } catch (e) {
+        // silent fail
+      }
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [user]);
+
+  const handleConnectWA = async () => {
+    setWa(prev => ({ ...prev, status: 'connecting' }));
+    const token = localStorage.getItem('fm_token');
+    await fetch('http://localhost:3000/api/whatsapp/connect', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  };
+
+  const handleLogoutWA = async () => {
+    const token = localStorage.getItem('fm_token');
+    await fetch('http://localhost:3000/api/whatsapp/logout', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setWa({ status: 'none', qr: null });
+  };
+
+  // ... (existing imports/logic)
+
   const handleStartBroadcast = async (templateId: number) => {
     if (broadcastContacts.length === 0) return alert('Import contacts first');
     setIsSending(true);
+    const token = localStorage.getItem('fm_token');
+    if (!token) return;
+
+    const template = templates.find(t => t.id === templateId);
 
     // Process contacts one by one with delay
     for (let i = 0; i < broadcastContacts.length; i++) {
       const contact = broadcastContacts[i];
+      if (contact.status === 'Sent') continue;
 
-      // Simulate sending
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        const res = await fetch('http://localhost:3000/api/whatsapp/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            phone: contact.phone,
+            message: template?.content.replace('[name]', contact.name) || 'Hello'
+          })
+        });
 
-      setBroadcastContacts(prev => {
-        const next = [...prev];
-        next[i] = { ...next[i], status: 'Sent' };
-        return next;
-      });
+        if (res.ok) {
+          setBroadcastContacts(prev => {
+            const next = [...prev];
+            next[i] = { ...next[i], status: 'Sent' };
+            return next;
+          });
+          setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + 1 }));
+        } else {
+          setBroadcastContacts(prev => {
+            const next = [...prev];
+            next[i] = { ...next[i], status: 'Failed' };
+            return next;
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
 
-      setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + 1 }));
-
-      // Random delay between messages (simulated)
+      // Random delay (controlled by server too, but client pacing is good UX)
       if (i < broadcastContacts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 2000));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
@@ -391,9 +425,120 @@ const App: React.FC = () => {
       }
     };
 
-    // Run check once on connect or settings change
+    // Run check once on connect or settings change, and set up an interval for scheduled tasks
+    const interval = setInterval(checkCelebrations, 60000); // Check every minute
     checkCelebrations();
+
+    return () => clearInterval(interval);
   }, [wa.status, campaignSettings, customers, templates]);
+
+  // Combined logic for auto-campaigns (Birthday, Anniversary, and Scheduled)
+  const checkCelebrations = async () => {
+    if (!wa || wa.status !== 'connected') return;
+    const token = localStorage.getItem('fm_token');
+    if (!token) return;
+
+    const today = new Date();
+    // Format to "DD Month" e.g. "26 January" or "26 Jan"
+    const day = today.getDate().toString().padStart(2, '0');
+    const month = today.toLocaleString('en-GB', { month: 'short' });
+    const todayStr = `${day} ${month}`; // "26 Jan"
+
+    const birthdayTemplate = campaignSettings.birthdayActive ? templates.find(t => t.id === campaignSettings.birthdayTemplateId) : null;
+    const anniversaryTemplate = campaignSettings.anniversaryActive ? templates.find(t => t.id === campaignSettings.anniversaryTemplateId) : null;
+
+    let sentCount = 0;
+
+    // 1. Process Repeater Campaigns (Birthday/Anniversary)
+    for (const customer of customers) {
+      // Birthday check
+      if (birthdayTemplate && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
+        try {
+          console.log(`Auto-sending Birthday wish to ${customer.name}`);
+          await fetch('http://localhost:3000/api/whatsapp/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              phone: customer.whatsapp,
+              message: birthdayTemplate.content.replace('[name]', customer.name)
+            })
+          });
+          sentCount++;
+        } catch (e) { console.error('Auto-campaign failed', e); }
+      }
+
+      // Anniversary check
+      if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
+        try {
+          console.log(`Auto-sending Anniversary wish to ${customer.name}`);
+          await fetch('http://localhost:3000/api/whatsapp/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              phone: customer.whatsapp,
+              message: anniversaryTemplate.content.replace('[name]', customer.name)
+            })
+          });
+          sentCount++;
+        } catch (e) { console.error('Auto-campaign failed', e); }
+      }
+    }
+
+    // 2. Process One-time Scheduled Campaigns
+    const now = new Date();
+    let campaignsUpdated = false;
+    const updatedCampaigns = [...(campaignSettings.scheduledCampaigns || [])];
+
+    for (let i = 0; i < updatedCampaigns.length; i++) {
+      const campaign = updatedCampaigns[i];
+      if (campaign.status === 'Pending' && new Date(campaign.scheduledTime) <= now) {
+        const template = templates.find(t => t.id === campaign.templateId);
+        if (template) {
+          console.log(`Starting Scheduled Campaign: ${template.title}`);
+
+          // Send all
+          for (const customer of customers) {
+            try {
+              await fetch('http://localhost:3000/api/whatsapp/send', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  phone: customer.whatsapp,
+                  message: template.content.replace('[name]', customer.name)
+                })
+              });
+              sentCount++;
+              // Rate limit
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (e) { console.error('Scheduled send failed', e); }
+          }
+
+          updatedCampaigns[i] = { ...campaign, status: 'Completed' };
+          campaignsUpdated = true;
+        }
+      }
+    }
+
+    if (campaignsUpdated) {
+      handleUpdateCampaignSettings({
+        ...campaignSettings,
+        scheduledCampaigns: updatedCampaigns
+      });
+    }
+
+    if (sentCount > 0) {
+      setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + sentCount }));
+    }
+  };
 
   return (
     <Router>

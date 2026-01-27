@@ -16,15 +16,37 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
     customers,
     onRunManual
 }) => {
-    const [showSelector, setShowSelector] = useState<'birthday' | 'anniversary' | null>(null);
+    const [showSelector, setShowSelector] = useState<'birthday' | 'anniversary' | 'schedule' | null>(null);
+    const [scheduleDateTime, setScheduleDateTime] = useState('');
 
     const handleSelectTemplate = (templateId: number) => {
         if (showSelector === 'birthday') {
             onUpdateSettings({ ...settings, birthdayTemplateId: templateId });
+            setShowSelector(null);
         } else if (showSelector === 'anniversary') {
             onUpdateSettings({ ...settings, anniversaryTemplateId: templateId });
+            setShowSelector(null);
+        } else if (showSelector === 'schedule') {
+            // Logic handled in render for schedule flow or here if simple
+            // For schedule, we probably want to select template FIRST, then confirm date
+            // But let's assume we pass templateId to a confirmation or just add it if date is set
+            if (!scheduleDateTime) {
+                alert('Please select a date and time first');
+                return;
+            }
+            const newCampaign = {
+                id: Date.now(),
+                templateId,
+                scheduledTime: scheduleDateTime,
+                status: 'Pending' as const
+            };
+            onUpdateSettings({
+                ...settings,
+                scheduledCampaigns: [...(settings.scheduledCampaigns || []), newCampaign]
+            });
+            setShowSelector(null);
+            setScheduleDateTime('');
         }
-        setShowSelector(null);
     };
 
     const toggleCampaign = (type: 'birthday' | 'anniversary') => {
@@ -179,6 +201,72 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                         <p className="text-[10px] text-purple-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
                     )}
                 </div>
+
+                {/* Scheduled Campaigns Card */}
+                <div className="relative p-8 rounded-[3rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/50 md:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                    <div className="flex justify-between items-start mb-8">
+                        <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl bg-blue-500 text-white shadow-lg shadow-blue-200">
+                            <i className="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <button
+                            onClick={() => setShowSelector('schedule')}
+                            className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
+                        >
+                            <i className="fa-solid fa-plus"></i>
+                            <span>Schedule New</span>
+                        </button>
+                    </div>
+
+                    <h3 className="text-2xl font-black text-slate-800 mb-2">Scheduled Campaigns</h3>
+                    <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Plan one-off campaigns for holidays, events, or announcements.</p>
+
+                    <div className="space-y-3">
+                        {(!settings.scheduledCampaigns || settings.scheduledCampaigns.length === 0) ? (
+                            <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                <p className="text-slate-400 font-bold mb-1">No upcoming campaigns</p>
+                                <p className="text-xs text-slate-400">Schedule your first campaign to get started.</p>
+                            </div>
+                        ) : (
+                            settings.scheduledCampaigns.map(campaign => (
+                                <div key={campaign.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg ${campaign.status === 'Pending' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                            <i className={campaign.status === 'Pending' ? "fa-solid fa-clock" : "fa-solid fa-check"}></i>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-800">{getTemplateTitle(campaign.templateId)}</h4>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                                    {new Date(campaign.scheduledTime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${campaign.status === 'Pending' ? 'bg-amber-100 text-amber-600' :
+                                            campaign.status === 'Completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                                            }`}>
+                                            {campaign.status}
+                                        </span>
+                                        {campaign.status === 'Pending' && (
+                                            <button
+                                                onClick={() => {
+                                                    onUpdateSettings({
+                                                        ...settings,
+                                                        scheduledCampaigns: settings.scheduledCampaigns.filter(c => c.id !== campaign.id)
+                                                    });
+                                                }}
+                                                className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                                            >
+                                                <i className="fa-solid fa-trash-can text-xs"></i>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Template Selector Modal */}
@@ -200,6 +288,25 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                         </div>
 
                         <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
+                            {showSelector === 'schedule' && (
+                                <div className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Scheduled Time</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={scheduleDateTime}
+                                        onChange={(e) => setScheduleDateTime(e.target.value)}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        min={new Date().toISOString().slice(0, 16)}
+                                    />
+                                    {scheduleDateTime && (
+                                        <p className="text-xs text-blue-500 font-bold mt-2 text-right">
+                                            <i className="fa-solid fa-clock mr-1"></i>
+                                            Will run on {new Date(scheduleDateTime).toLocaleString()}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             {templates.length === 0 ? (
                                 <div className="py-12 text-center text-slate-400">
                                     <i className="fa-solid fa-box-open text-4xl mb-4 opacity-20"></i>

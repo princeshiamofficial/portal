@@ -13,21 +13,44 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [storeName, setStoreName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
-    // Simulate authentication processing
-    setTimeout(() => {
-      setLoading(false);
-      if (email && password) {
-        setMessage(isLogin ? "Login successful! Redirecting..." : "Registration successful! You can now log in.");
-        onLogin(email, storeName || "Master Branch");
-      } else {
-        setMessage("Authentication failed. Please check your credentials.");
+    const endpoint = isLogin ? 'http://localhost:3000/api/login' : 'http://localhost:3000/api/register';
+    const payload = isLogin ? { email, password } : { email, password, storeName };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Authentication failed');
       }
-    }, 1500);
+
+      setLoading(false);
+
+      if (isLogin) {
+        setMessage("Login successful! Redirecting...");
+        // Save token and user details
+        localStorage.setItem('fm_token', data.token);
+        // We can also let App handle the user saving via onLogin
+        onLogin(data.user.email, data.user.storeName);
+      } else {
+        setMessage("Registration successful! Please log in.");
+        setIsLogin(true);
+        setPassword('');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setMessage(err.message || "Something went wrong. Please check your connection.");
+    }
   };
 
   return (
