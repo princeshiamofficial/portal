@@ -40,5 +40,9 @@ A multi-tenant customer relationship management system with WhatsApp integration
    - Build: `npm run build`
    - Run server: `node server/index.js` (serves the `dist` folder)
 
+## Deployment
+
+For detailed instructions on hosting this application on **CyberPanel**, see [DEPLOYMENT_CYBERPANEL.md](./DEPLOYMENT_CYBERPANEL.md).
+
 ## License
 MIT
