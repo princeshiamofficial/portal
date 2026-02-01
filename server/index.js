@@ -912,14 +912,31 @@ startCampaignScheduler();
     }
 
     const distPath = path.resolve(__dirname, '..', 'dist');
+
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+        res.json({ status: 'ok', message: 'Server is running' });
+    });
+
     if (fs.existsSync(distPath)) {
         console.log(`Serving static files from: ${distPath}`);
         app.use(express.static(distPath));
 
-        app.get(/^(?!\/(api|uploads)).*$/, (req, res) => {
+        app.get(/^(?!\/(api|uploads|health)).*$/, (req, res) => {
             res.sendFile(path.join(distPath, 'index.html'));
         });
+    } else {
+        console.warn(`⚠️  Dist folder not found at: ${distPath}. Please run 'npm run build'.`);
+        app.get('/', (req, res) => {
+            res.status(200).send('Backend is running, but frontend (dist) is missing. Please run "npm run build".');
+        });
     }
+
+    // Error handler
+    app.use((err, req, res, next) => {
+        console.error('Unhandled Error:', err);
+        res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    });
 
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
