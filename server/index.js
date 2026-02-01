@@ -715,42 +715,29 @@ app.post('/api/templates/restore-defaults', authenticateToken, async (req, res) 
     }
 });
 
-// --- Server-Side Campaign Scheduler ---
 const startCampaignScheduler = () => {
     console.log('[Scheduler] 🚀 Campaign scheduler initialized - runs every minute');
-    // Run every minute
     cron.schedule('* * * * *', async () => {
         const db = await getDb();
         const activeInstances = getActiveInstanceIds();
 
         console.log(`[Scheduler] ==================== SCHEDULER RUN ====================`);
         console.log(`[Scheduler] Time: ${new Date().toISOString()}`);
-        console.log(`[Scheduler] Checking campaigns for ${activeInstances.length} active WhatsApp sessions...`);
-        console.log(`[Scheduler] Active Instance IDs:`, activeInstances);
 
         for (const instanceId of activeInstances) {
             try {
-                // Find user by instanceId
                 const user = await db.get('SELECT id, email, storeName, role FROM users WHERE instanceId = ?', [instanceId]);
                 if (!user) {
                     console.log(`[Scheduler] No user found for instance: ${instanceId}`);
                     continue;
                 }
 
-                console.log(`[Scheduler] Processing user: ${user.storeName} (${user.email}) - Role: ${user.role || 'user'}`);
+                const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+                console.log(`[Scheduler] Processing user: ${user.storeName} (${user.email}) - BD Time: ${now.toLocaleString()}`);
 
                 const userId = user.id;
-
-                // Load Settings and Data
                 const settingsRow = await db.get('SELECT * FROM campaign_settings WHERE userId = ?', [userId]);
-                if (!settingsRow) {
-                    console.log(`[Scheduler] ⚠️ No campaign settings found for user: ${userId}`);
-                    continue;
-                }
-
-                const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
-                console.log(`[Scheduler] Bangladesh Time (BD): ${now.toLocaleString()}`);
-                console.log(`[Scheduler] Server ISO Time: ${new Date().toISOString()}`);
+                if (!settingsRow) continue;
 
                 const settings = {
                     ...settingsRow,
@@ -762,7 +749,6 @@ const startCampaignScheduler = () => {
                 const templates = await db.all('SELECT * FROM templates WHERE userId = ?', [userId]);
                 const customers = await db.all('SELECT * FROM customers WHERE userId = ?', [userId]);
 
-                // Date format for Birthdays/Anniversaries in BD Time
                 const todayISO = now.toISOString().split('T')[0];
                 const day = now.getDate().toString().padStart(2, '0');
                 const month = now.toLocaleString('en-GB', { month: 'short', timeZone: "Asia/Dhaka" });
