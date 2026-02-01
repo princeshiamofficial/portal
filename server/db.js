@@ -167,6 +167,18 @@ export async function initDb() {
         console.warn("[Migration] Charset conversion warning (can usually be ignored):", e.message);
     }
 
+    // Seed Default Superadmin
+    const existingAdmin = await db.get('SELECT * FROM users WHERE email = ?', ['admin@colorhutbd.com']);
+    if (!existingAdmin) {
+        console.log('Seeding default superadmin...');
+        const hashedPassword = await bcrypt.hash('C0l0rHu7@456', 10);
+        await db.run(
+            `INSERT INTO users (email, password, storeName, name, role, plan, status, memberId) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            ['admin@colorhutbd.com', hashedPassword, 'FoodMode Admin', 'Super Admin', 'superadmin', 'Pro', 'active', '000001']
+        );
+    }
+
     // Seed Default Templates if empty
     const existingDefaults = await db.all('SELECT count(*) as count FROM default_templates');
     if (existingDefaults[0].count === 0) {
