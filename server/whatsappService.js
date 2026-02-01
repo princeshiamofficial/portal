@@ -15,6 +15,23 @@ const sessions = {}; // instanceId -> socket
 const qrCodes = {}; // instanceId -> qr string
 const connectionStatus = {}; // instanceId -> 'connecting' | 'connected' | 'disconnected'
 
+export const restoreSessions = async () => {
+    if (!fs.existsSync(SESSIONS_DIR)) return;
+
+    const entries = fs.readdirSync(SESSIONS_DIR, { withFileTypes: true });
+    for (const entry of entries) {
+        if (entry.isDirectory()) {
+            const instanceId = entry.name;
+            console.log(`Restoring session for ${instanceId}...`);
+            await initializeWhatsApp(instanceId);
+        }
+    }
+};
+
+export const getActiveInstanceIds = () => {
+    return Object.keys(sessions).filter(id => connectionStatus[id] === 'connected');
+};
+
 export const initializeWhatsApp = async (instanceId, io) => {
     // Ensure session dir exists
     const sessionPath = path.join(SESSIONS_DIR, instanceId);
@@ -41,8 +58,13 @@ export const initializeWhatsApp = async (instanceId, io) => {
 
         if (qr) {
             // Generate QR code as data URL
-            qrCodes[instanceId] = await QRCode.toDataURL(qr);
-            connectionStatus[instanceId] = 'qr_ready';
+            try {
+                qrCodes[instanceId] = await QRCode.toDataURL(qr);
+                connectionStatus[instanceId] = 'qr_ready';
+                console.log(`QR Code generated for ${instanceId}`);
+            } catch (err) {
+                console.error('Failed to generate QR data URL:', err);
+            }
         }
 
         if (connection === 'close') {
@@ -80,7 +102,7 @@ export const getSessionStatus = (instanceId) => {
         qr: qrCodes[instanceId] || null,
         user: (connectionStatus[instanceId] === 'connected' && socket?.user) ? {
             id: socket.user.id,
-            name: socket.user.name || socket.user.notify || socket.user.vname
+            name: socket.user.name || socket.user.notify || socket.user.vname || socket.authState?.creds?.me?.name
         } : undefined
     };
 };

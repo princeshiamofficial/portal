@@ -16,6 +16,9 @@ export interface User {
     role: string;
     status?: string;
     instanceId?: string;
+    logo?: string;
+    memberId?: string;
+    storeUrl?: string;
 }
 
 export interface Customer {
@@ -35,6 +38,7 @@ export interface Template {
     content: string;
     type: 'Personal' | 'System' | 'Promotion';
     is_hidden?: boolean;
+    deleted?: boolean;
 }
 
 export interface WhatsAppSession {
@@ -50,6 +54,7 @@ export interface BroadcastContact {
     name: string;
     phone: string;
     status: 'Pending' | 'Sent' | 'Failed';
+    business?: string;
 }
 
 export interface BroadcastStats {
@@ -60,6 +65,7 @@ export interface ScheduledCampaign {
     templateId: number;
     scheduledTime: string; // ISO string
     status: 'Pending' | 'Completed' | 'Cancelled';
+    targetRole?: string;
 }
 
 export interface SpecialCampaignSettings {
@@ -68,4 +74,5 @@ export interface SpecialCampaignSettings {
     anniversaryTemplateId: number | null;
     anniversaryActive: boolean;
     scheduledCampaigns: ScheduledCampaign[];
+    lastRunDate?: string; // YYYY-MM-DD to track daily runs
 }

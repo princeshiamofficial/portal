@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Template, SpecialCampaignSettings, Customer } from '../types.ts';
+import { Template, SpecialCampaignSettings, Customer, User } from '../types';
 
 interface SpecialCampaignProps {
+    user?: User | null;
     templates: Template[];
     settings: SpecialCampaignSettings;
     onUpdateSettings: (settings: SpecialCampaignSettings) => void;
@@ -10,6 +11,7 @@ interface SpecialCampaignProps {
 }
 
 const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
+    user,
     templates,
     settings,
     onUpdateSettings,
@@ -18,6 +20,18 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
 }) => {
     const [showSelector, setShowSelector] = useState<'birthday' | 'anniversary' | 'schedule' | null>(null);
     const [scheduleDateTime, setScheduleDateTime] = useState('');
+    const [selectedRole, setSelectedRole] = useState<string>('All');
+    const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+    const [activeTab, setActiveTab] = useState<'Pending' | 'Completed'>('Pending');
+    const [showToast, setShowToast] = useState(false);
+
+    // Auto-hide toast
+    React.useEffect(() => {
+        if (showToast) {
+            const t = setTimeout(() => setShowToast(false), 3000);
+            return () => clearTimeout(t);
+        }
+    }, [showToast]);
 
     const handleSelectTemplate = (templateId: number) => {
         if (showSelector === 'birthday') {
@@ -27,18 +41,16 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
             onUpdateSettings({ ...settings, anniversaryTemplateId: templateId });
             setShowSelector(null);
         } else if (showSelector === 'schedule') {
-            // Logic handled in render for schedule flow or here if simple
-            // For schedule, we probably want to select template FIRST, then confirm date
-            // But let's assume we pass templateId to a confirmation or just add it if date is set
             if (!scheduleDateTime) {
-                alert('Please select a date and time first');
+                setShowToast(true);
                 return;
             }
             const newCampaign = {
                 id: Date.now(),
                 templateId,
                 scheduledTime: scheduleDateTime,
-                status: 'Pending' as const
+                status: 'Pending' as const,
+                targetRole: isAdmin ? selectedRole : undefined
             };
             onUpdateSettings({
                 ...settings,
@@ -46,6 +58,7 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
             });
             setShowSelector(null);
             setScheduleDateTime('');
+            setSelectedRole('All');
         }
     };
 
@@ -63,11 +76,21 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
     };
 
     const getTodayCelebrants = (type: 'birthday' | 'anniversary') => {
-        const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const today = new Date();
+        const d = today.getDate().toString().padStart(2, '0');
+        const m = (today.getMonth() + 1).toString().padStart(2, '0');
+        const dayMonthIso = `${m}-${d}`;
+        const todayShort = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
         return customers.filter(c => {
-            if (type === 'birthday') return c.dob.includes(todayStr);
-            if (type === 'anniversary') return c.anniversaryDate?.includes(todayStr);
-            return false;
+            const dateVal = type === 'birthday' ? c.dob : c.anniversaryDate;
+            if (!dateVal) return false;
+
+            if (dateVal.includes('-') && dateVal.split('-').length === 3) {
+                return dateVal.endsWith(dayMonthIso);
+            }
+
+            return dateVal.includes(todayShort);
         });
     };
 
@@ -83,124 +106,132 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                         <span className="h-1 w-8 bg-red-500 rounded-full"></span>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Automated Outreach</p>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight">Special Campaigns</h2>
-                    <p className="text-slate-500 mt-2 font-medium">Configure automatic messaging for customer celebrations.</p>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight">
+                        {isAdmin ? 'Platform System Update' : 'Special Campaigns'}
+                    </h2>
+                    <p className="text-slate-500 mt-2 font-medium">
+                        {isAdmin ? 'Schedule and broadcast system-wide updates to all active business tenants.' : 'Configure automatic messaging for customer celebrations.'}
+                    </p>
                 </div>
             </div>
 
             {/* Campaign Configuration Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
                 {/* Birthday Campaign */}
-                <div className={`relative p-8 rounded-[3rem] border transition-all duration-500 ${settings.birthdayActive ? 'bg-white border-rose-100 shadow-xl shadow-rose-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'}`}>
-                    <div className="flex justify-between items-start mb-8">
-                        <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl ${settings.birthdayActive ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' : 'bg-slate-200 text-slate-400'}`}>
-                            <i className="fa-solid fa-cake-candles"></i>
-                        </div>
-
-                        {/* Toggle Switch */}
-                        <div className="flex items-center gap-3">
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${settings.birthdayActive ? 'text-rose-500' : 'text-slate-400'}`}>
-                                {settings.birthdayActive ? 'Active' : 'Inactive'}
-                            </span>
-                            <button
-                                onClick={() => toggleCampaign('birthday')}
-                                className={`w-14 h-7 rounded-full transition-all relative p-1 ${settings.birthdayActive ? 'bg-rose-500' : 'bg-slate-300'}`}
-                            >
-                                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${settings.birthdayActive ? 'translate-x-7' : 'translate-x-0'}`}></div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <h3 className="text-2xl font-black text-slate-800 mb-2">Birthday Campaign</h3>
-                    <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Send a warm greeting and special offer to customers on their special day.</p>
-
-                    <div className="space-y-4 mb-8">
-                        <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <i className="fa-solid fa-message text-slate-400"></i>
-                                <span className="text-sm font-bold text-slate-600">Template</span>
+                {!isAdmin && (
+                    <div className={`relative p-8 rounded-[3rem] border transition-all duration-500 ${settings.birthdayActive ? 'bg-white border-rose-100 shadow-xl shadow-rose-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'}`}>
+                        <div className="flex justify-between items-start mb-8">
+                            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl ${settings.birthdayActive ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' : 'bg-slate-200 text-slate-400'}`}>
+                                <i className="fa-solid fa-cake-candles"></i>
                             </div>
-                            <span className={`text-sm font-black ${settings.birthdayTemplateId ? 'text-rose-500' : 'text-slate-400'}`}>
-                                {getTemplateTitle(settings.birthdayTemplateId)}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <i className="fa-solid fa-users text-slate-400"></i>
-                                <span className="text-sm font-bold text-slate-600">Today's Celebrants</span>
-                            </div>
-                            <span className="text-sm font-black text-slate-800">{birthdayCelebrants.length} Customers</span>
-                        </div>
-                    </div>
 
-                    <button
-                        onClick={() => setShowSelector('birthday')}
-                        className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${settings.birthdayActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
-                        disabled={!settings.birthdayActive && !!settings.birthdayTemplateId}
-                    >
-                        <i className="fa-solid fa-pen-to-square text-xs"></i>
-                        <span>{settings.birthdayTemplateId ? 'Change Template' : 'Select Template'}</span>
-                    </button>
-                    {!settings.birthdayTemplateId && settings.birthdayActive && (
-                        <p className="text-[10px] text-rose-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
-                    )}
-                </div>
+                            {/* Toggle Switch */}
+                            <div className="flex items-center gap-3">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${settings.birthdayActive ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {settings.birthdayActive ? 'Active' : 'Inactive'}
+                                </span>
+                                <button
+                                    onClick={() => toggleCampaign('birthday')}
+                                    className={`w-14 h-7 rounded-full transition-all relative p-1 ${settings.birthdayActive ? 'bg-rose-500' : 'bg-slate-300'}`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${settings.birthdayActive ? 'translate-x-7' : 'translate-x-0'}`}></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">Birthday Campaign</h3>
+                        <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Send a warm greeting and special offer to customers on their special day.</p>
+
+                        <div className="space-y-4 mb-8">
+                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-solid fa-message text-slate-400"></i>
+                                    <span className="text-sm font-bold text-slate-600">Template</span>
+                                </div>
+                                <span className={`text-sm font-black ${settings.birthdayTemplateId ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {getTemplateTitle(settings.birthdayTemplateId)}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-solid fa-users text-slate-400"></i>
+                                    <span className="text-sm font-bold text-slate-600">Today's Celebrants</span>
+                                </div>
+                                <span className="text-sm font-black text-slate-800">{birthdayCelebrants.length} Customers</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowSelector('birthday')}
+                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${settings.birthdayActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
+                            disabled={!settings.birthdayActive && !!settings.birthdayTemplateId}
+                        >
+                            <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            <span>{settings.birthdayTemplateId ? 'Change Template' : 'Select Template'}</span>
+                        </button>
+                        {!settings.birthdayTemplateId && settings.birthdayActive && (
+                            <p className="text-[10px] text-rose-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
+                        )}
+                    </div>
+                )}
 
                 {/* Anniversary Campaign */}
-                <div className={`relative p-8 rounded-[3rem] border transition-all duration-500 ${settings.anniversaryActive ? 'bg-white border-purple-100 shadow-xl shadow-purple-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'}`}>
-                    <div className="flex justify-between items-start mb-8">
-                        <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl ${settings.anniversaryActive ? 'bg-purple-500 text-white shadow-lg shadow-purple-200' : 'bg-slate-200 text-slate-400'}`}>
-                            <i className="fa-solid fa-heart"></i>
-                        </div>
-
-                        {/* Toggle Switch */}
-                        <div className="flex items-center gap-3">
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${settings.anniversaryActive ? 'text-purple-500' : 'text-slate-400'}`}>
-                                {settings.anniversaryActive ? 'Active' : 'Inactive'}
-                            </span>
-                            <button
-                                onClick={() => toggleCampaign('anniversary')}
-                                className={`w-14 h-7 rounded-full transition-all relative p-1 ${settings.anniversaryActive ? 'bg-purple-500' : 'bg-slate-300'}`}
-                            >
-                                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${settings.anniversaryActive ? 'translate-x-7' : 'translate-x-0'}`}></div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <h3 className="text-2xl font-black text-slate-800 mb-2">Anniversary Campaign</h3>
-                    <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Celebrate customer milestones with a heartfelt message and reward.</p>
-
-                    <div className="space-y-4 mb-8">
-                        <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <i className="fa-solid fa-message text-slate-400"></i>
-                                <span className="text-sm font-bold text-slate-600">Template</span>
+                {!isAdmin && (
+                    <div className={`relative p-8 rounded-[3rem] border transition-all duration-500 ${settings.anniversaryActive ? 'bg-white border-purple-100 shadow-xl shadow-purple-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'}`}>
+                        <div className="flex justify-between items-start mb-8">
+                            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl ${settings.anniversaryActive ? 'bg-purple-500 text-white shadow-lg shadow-purple-200' : 'bg-slate-200 text-slate-400'}`}>
+                                <i className="fa-solid fa-heart"></i>
                             </div>
-                            <span className={`text-sm font-black ${settings.anniversaryTemplateId ? 'text-purple-500' : 'text-slate-400'}`}>
-                                {getTemplateTitle(settings.anniversaryTemplateId)}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <i className="fa-solid fa-users text-slate-400"></i>
-                                <span className="text-sm font-bold text-slate-600">Today's Celebrants</span>
-                            </div>
-                            <span className="text-sm font-black text-slate-800">{anniversaryCelebrants.length} Customers</span>
-                        </div>
-                    </div>
 
-                    <button
-                        onClick={() => setShowSelector('anniversary')}
-                        className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${settings.anniversaryActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
-                        disabled={!settings.anniversaryActive && !!settings.anniversaryTemplateId}
-                    >
-                        <i className="fa-solid fa-pen-to-square text-xs"></i>
-                        <span>{settings.anniversaryTemplateId ? 'Change Template' : 'Select Template'}</span>
-                    </button>
-                    {!settings.anniversaryTemplateId && settings.anniversaryActive && (
-                        <p className="text-[10px] text-purple-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
-                    )}
-                </div>
+                            {/* Toggle Switch */}
+                            <div className="flex items-center gap-3">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${settings.anniversaryActive ? 'text-purple-500' : 'text-slate-400'}`}>
+                                    {settings.anniversaryActive ? 'Active' : 'Inactive'}
+                                </span>
+                                <button
+                                    onClick={() => toggleCampaign('anniversary')}
+                                    className={`w-14 h-7 rounded-full transition-all relative p-1 ${settings.anniversaryActive ? 'bg-purple-500' : 'bg-slate-300'}`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${settings.anniversaryActive ? 'translate-x-7' : 'translate-x-0'}`}></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">Anniversary Campaign</h3>
+                        <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Celebrate customer milestones with a heartfelt message and reward.</p>
+
+                        <div className="space-y-4 mb-8">
+                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-solid fa-message text-slate-400"></i>
+                                    <span className="text-sm font-bold text-slate-600">Template</span>
+                                </div>
+                                <span className={`text-sm font-black ${settings.anniversaryTemplateId ? 'text-purple-500' : 'text-slate-400'}`}>
+                                    {getTemplateTitle(settings.anniversaryTemplateId)}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-solid fa-users text-slate-400"></i>
+                                    <span className="text-sm font-bold text-slate-600">Today's Celebrants</span>
+                                </div>
+                                <span className="text-sm font-black text-slate-800">{anniversaryCelebrants.length} Customers</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowSelector('anniversary')}
+                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${settings.anniversaryActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
+                            disabled={!settings.anniversaryActive && !!settings.anniversaryTemplateId}
+                        >
+                            <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            <span>{settings.anniversaryTemplateId ? 'Change Template' : 'Select Template'}</span>
+                        </button>
+                        {!settings.anniversaryTemplateId && settings.anniversaryActive && (
+                            <p className="text-[10px] text-purple-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
+                        )}
+                    </div>
+                )}
 
                 {/* Scheduled Campaigns Card */}
                 <div className="relative p-8 rounded-[3rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/50 md:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
@@ -220,50 +251,78 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                     <h3 className="text-2xl font-black text-slate-800 mb-2">Scheduled Campaigns</h3>
                     <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Plan one-off campaigns for holidays, events, or announcements.</p>
 
+                    {/* Tab Navigation */}
+                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-6 w-fit">
+                        <button
+                            onClick={() => setActiveTab('Pending')}
+                            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'Pending' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Pending
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('Completed')}
+                            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'Completed' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Completed
+                        </button>
+                    </div>
+
                     <div className="space-y-3">
-                        {(!settings.scheduledCampaigns || settings.scheduledCampaigns.length === 0) ? (
+                        {(!settings.scheduledCampaigns || settings.scheduledCampaigns.filter(c => c.status === activeTab).length === 0) ? (
                             <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                <p className="text-slate-400 font-bold mb-1">No upcoming campaigns</p>
-                                <p className="text-xs text-slate-400">Schedule your first campaign to get started.</p>
+                                <p className="text-slate-400 font-bold mb-1">No {activeTab.toLowerCase()} campaigns</p>
+                                <p className="text-xs text-slate-400">
+                                    {activeTab === 'Pending'
+                                        ? 'Schedule your first campaign to get started.'
+                                        : 'Completed campaigns will appear here.'}
+                                </p>
                             </div>
                         ) : (
-                            settings.scheduledCampaigns.map(campaign => (
-                                <div key={campaign.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg ${campaign.status === 'Pending' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                            <i className={campaign.status === 'Pending' ? "fa-solid fa-clock" : "fa-solid fa-check"}></i>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-slate-800">{getTemplateTitle(campaign.templateId)}</h4>
-                                            <div className="flex items-center gap-3 mt-1">
-                                                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                                    {new Date(campaign.scheduledTime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                                </span>
+                            settings.scheduledCampaigns
+                                .filter(campaign => campaign.status === activeTab)
+                                .map(campaign => (
+                                    <div key={campaign.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all gap-4">
+                                        <div className="flex items-center gap-4 flex-1">
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg ${campaign.status === 'Pending' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                                <i className={campaign.status === 'Pending' ? "fa-solid fa-clock" : "fa-solid fa-check"}></i>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-800">{getTemplateTitle(campaign.templateId)}</h4>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                                        {new Date(campaign.scheduledTime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                    </span>
+                                                    {campaign.targetRole && (
+                                                        <span className="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">
+                                                            <i className="fa-solid fa-filter mr-1 text-[8px]"></i>
+                                                            Target: {campaign.targetRole}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${campaign.status === 'Pending' ? 'bg-amber-100 text-amber-600' :
+                                                campaign.status === 'Completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                                                }`}>
+                                                {campaign.status}
+                                            </span>
+                                            {campaign.status === 'Pending' && (
+                                                <button
+                                                    onClick={() => {
+                                                        onUpdateSettings({
+                                                            ...settings,
+                                                            scheduledCampaigns: settings.scheduledCampaigns.filter(c => c.id !== campaign.id)
+                                                        });
+                                                    }}
+                                                    className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                                                >
+                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${campaign.status === 'Pending' ? 'bg-amber-100 text-amber-600' :
-                                            campaign.status === 'Completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
-                                            }`}>
-                                            {campaign.status}
-                                        </span>
-                                        {campaign.status === 'Pending' && (
-                                            <button
-                                                onClick={() => {
-                                                    onUpdateSettings({
-                                                        ...settings,
-                                                        scheduledCampaigns: settings.scheduledCampaigns.filter(c => c.id !== campaign.id)
-                                                    });
-                                                }}
-                                                className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
-                                            >
-                                                <i className="fa-solid fa-trash-can text-xs"></i>
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
+                                ))
                         )}
                     </div>
                 </div>
@@ -289,22 +348,45 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
 
                         <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
                             {showSelector === 'schedule' && (
-                                <div className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Scheduled Time</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={scheduleDateTime}
-                                        onChange={(e) => setScheduleDateTime(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                        min={new Date().toISOString().slice(0, 16)}
-                                    />
-                                    {scheduleDateTime && (
-                                        <p className="text-xs text-blue-500 font-bold mt-2 text-right">
-                                            <i className="fa-solid fa-clock mr-1"></i>
-                                            Will run on {new Date(scheduleDateTime).toLocaleString()}
-                                        </p>
+                                <>
+                                    <div className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Scheduled Time</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={scheduleDateTime}
+                                            onChange={(e) => setScheduleDateTime(e.target.value)}
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            min={new Date().toISOString().slice(0, 16)}
+                                        />
+                                        {scheduleDateTime && (
+                                            <p className="text-xs text-blue-500 font-bold mt-2 text-right">
+                                                <i className="fa-solid fa-clock mr-1"></i>
+                                                Will run on {new Date(scheduleDateTime).toLocaleString()}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {isAdmin && (
+                                        <div className="mb-6 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Target Designation</label>
+                                            <select
+                                                value={selectedRole}
+                                                onChange={(e) => setSelectedRole(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            >
+                                                <option value="All">All Designations</option>
+                                                <option value="Owner">Owner</option>
+                                                <option value="Manager">Manager</option>
+                                                <option value="Chief">Chief</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                            <p className="text-xs text-indigo-500 font-bold mt-2">
+                                                <i className="fa-solid fa-filter mr-1"></i>
+                                                Campaign will be sent to {selectedRole === 'All' ? 'all users' : `${selectedRole} designations only`}
+                                            </p>
+                                        </div>
                                     )}
-                                </div>
+                                </>
                             )}
 
                             {templates.length === 0 ? (
@@ -386,6 +468,26 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                     )}
                 </div>
             </div>
+            {/* Validation Toast */}
+            {showToast && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-xl">
+                        <div className="w-8 h-8 bg-red-500 rounded-xl flex items-center justify-center text-xs">
+                            <i className="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <p className="text-sm font-black whitespace-nowrap">Selection Required</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Please select a date and time first</p>
+                        </div>
+                        <button
+                            onClick={() => setShowToast(false)}
+                            className="ml-4 text-slate-500 hover:text-white transition-colors"
+                        >
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

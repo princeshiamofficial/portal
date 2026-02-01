@@ -10,16 +10,22 @@ import { View, User, Customer, Template, WhatsAppSession, BroadcastContact, Broa
 
 import Dashboard from './components/Dashboard';
 import SpecialCampaign from './components/SpecialCampaign';
+import Settings from './components/Settings';
+import VIPMember from './components/VIPMember';
+import StorePage from './components/StorePage';
+
 
 // Wrapper to handle navigation inside the Layout
 const AppContent: React.FC<{
   user: User | null;
-  onLogin: (email: string, storeName: string) => void;
+  onLogin: (user: User) => void;
   onLogout: () => void;
   customers: Customer[];
   templates: Template[];
   onSaveTemplate: (t: Partial<Template>) => void;
   onDeleteTemplate: (id: number) => void;
+  onRestoreTemplate: (id: number) => void;
+  onPermanentDeleteTemplate: (id: number) => void;
   wa: WhatsAppSession;
   onConnectWA: () => void;
   onLogoutWA: () => void;
@@ -30,6 +36,15 @@ const AppContent: React.FC<{
   isSending: boolean;
   campaignSettings: SpecialCampaignSettings;
   onUpdateCampaignSettings: (settings: SpecialCampaignSettings) => void;
+  onUpdateUser: (u: Partial<User>) => void;
+  onDeleteCustomer: (id: number) => void;
+  systemUsers: any[];
+  broadcastTarget: 'Customers' | 'Users';
+  setBroadcastTarget: (t: 'Customers' | 'Users') => void;
+  broadcastDesignation: string;
+  setBroadcastDesignation: (d: string) => void;
+  onRestoreDefaults: () => void;
+  isInitializing: boolean;
 }> = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,7 +58,6 @@ const AppContent: React.FC<{
       case '/devices': return View.DEVICES;
       case '/broadcast': return View.BROADCAST;
       case '/special-campaign': return View.SPECIAL_CAMPAIGN;
-      case '/insights': return View.INSIGHTS;
       case '/settings': return View.SETTINGS;
       default: return View.DASHBOARD;
     }
@@ -53,6 +67,82 @@ const AppContent: React.FC<{
     navigate(`/${view}`);
   };
 
+  // Validate session on route change
+  useEffect(() => {
+    if (!props.user) return; // public pages or already logged out
+
+    // Skip validating for public pages if they are matched here (but they usually return early above)
+    if (location.pathname.startsWith('/vip') || location.pathname.startsWith('/store')) return;
+
+    const validateSession = async () => {
+      const token = localStorage.getItem('fm_token');
+      if (!token) {
+        props.onLogout();
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/validate-session', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          console.warn("Route validation failed - logging out");
+          props.onLogout();
+          return;
+        }
+
+        if (!res.ok) return; // Ignore other transient server errors
+
+        const data = await res.json();
+        if (data && data.valid && data.user) {
+          // Check if account is active
+          if (data.user.isActive === 0 || data.user.isActive === false) {
+            alert("Your account has been deactivated by an administrator.");
+            props.onLogout();
+            return;
+          }
+
+          // Update local user state if role changed
+          if (data.user.role !== props.user.role) {
+            console.log("Role changed detected, updating session...");
+            props.onUpdateUser({ role: data.user.role });
+          }
+        }
+      } catch (e) {
+        console.error("Session check error (transient)", e);
+        // Do NOT logout on network error
+      }
+    };
+    validateSession();
+  }, [location.pathname, props.onLogout, props.user]);
+
+  // Public routes (No Auth required)
+  if (location.pathname.startsWith('/vip')) {
+    return <VIPMember />;
+  }
+
+  if (location.pathname.startsWith('/store')) {
+    return <StorePage />;
+  }
+
+  if (props.isInitializing) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc]">
+        <div className="relative">
+          <div className="w-20 h-20 border-4 border-slate-100 border-t-red-500 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img src="/assets/logo.png" alt="Logo" className="w-10 h-10 object-contain animate-pulse" />
+          </div>
+        </div>
+        <div className="mt-8 text-center">
+          <h3 className="text-xl font-black text-slate-800 tracking-tight">Authenticating</h3>
+          <p className="text-slate-400 font-medium text-sm mt-1">Verifying your secure session...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!props.user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
@@ -60,6 +150,11 @@ const AppContent: React.FC<{
       </div>
     );
   }
+
+  const isAdmin = props.user?.role?.toLowerCase() === 'admin' || props.user?.role?.toLowerCase() === 'superadmin';
+  const filteredTemplates = isAdmin
+    ? props.templates.filter(t => !t.title.includes('Birthday') && !t.title.includes('Anniversary'))
+    : props.templates;
 
   return (
     <Layout
@@ -70,14 +165,17 @@ const AppContent: React.FC<{
     >
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/customers" element={<Customers customers={props.customers} loading={false} />} />
+        <Route path="/dashboard" element={<Dashboard user={props.user} />} />
+        <Route path="/customers" element={<Customers customers={props.customers} loading={false} onDelete={props.onDeleteCustomer} user={props.user} />} />
         <Route path="/templates" element={
           <Templates
-            templates={props.templates}
+            templates={filteredTemplates}
             loading={false}
             onSave={props.onSaveTemplate}
             onDelete={props.onDeleteTemplate}
+            onRestore={props.onRestoreTemplate}
+            onPermanentDelete={props.onPermanentDeleteTemplate}
+            onRestoreDefaults={props.onRestoreDefaults}
           />
         } />
         <Route path="/devices" element={
@@ -89,18 +187,25 @@ const AppContent: React.FC<{
         } />
         <Route path="/broadcast" element={
           <Broadcast
-            templates={props.templates}
+            templates={filteredTemplates}
             contacts={props.broadcastContacts}
             wa={props.wa}
             stats={props.broadcastStats}
             onStart={props.onStartBroadcast}
             onImportCSV={props.onImportCSV}
             sending={props.isSending}
+            user={props.user}
+            systemUsers={props.systemUsers}
+            broadcastTarget={props.broadcastTarget}
+            setBroadcastTarget={props.setBroadcastTarget}
+            broadcastDesignation={props.broadcastDesignation}
+            setBroadcastDesignation={props.setBroadcastDesignation}
           />
         } />
         <Route path="/special-campaign" element={
           <SpecialCampaign
-            templates={props.templates}
+            user={props.user}
+            templates={filteredTemplates}
             settings={props.campaignSettings}
             onUpdateSettings={props.onUpdateCampaignSettings}
             customers={props.customers}
@@ -116,12 +221,11 @@ const AppContent: React.FC<{
             <p className="font-bold text-xl">AI Insights Coming Soon</p>
           </div>
         } />
+
         <Route path="/settings" element={
-          <div className="flex flex-col items-center justify-center h-full text-slate-400">
-            <i className="fa-solid fa-cog text-6xl mb-4 opacity-20"></i>
-            <p className="font-bold text-xl">Settings Coming Soon</p>
-          </div>
+          <Settings user={props.user!} onUpdateUser={props.onUpdateUser} />
         } />
+
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Layout>
@@ -129,8 +233,12 @@ const AppContent: React.FC<{
 };
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const cached = localStorage.getItem('fm_user');
+    return cached ? JSON.parse(cached) : null;
+  });
   const [loading, setLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false); // We can be optimistic now
 
   // Data loaded from server on login
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -152,30 +260,93 @@ const App: React.FC = () => {
     anniversaryActive: false,
     scheduledCampaigns: []
   });
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [broadcastTarget, setBroadcastTarget] = useState<'Customers' | 'Users'>('Customers');
+  const [broadcastDesignation, setBroadcastDesignation] = useState<string>('All');
 
-  // Persist user session to localStorage (simple)
+  // Load session from token on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('fm_user');
-    if (savedUser) setUser(JSON.parse(savedUser));
-
-    const savedSettings = localStorage.getItem('fm_campaign_settings');
-    if (savedSettings) setCampaignSettings(JSON.parse(savedSettings));
+    const token = localStorage.getItem('fm_token');
+    if (token) {
+      // Quiet background validation
+      fetch('/api/validate-session', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => {
+          if (res.status === 401 || res.status === 403) {
+            handleLogout(); // Definitive invalid session
+            return;
+          }
+          if (!res.ok) return; // Ignore other server errors (transient)
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.valid && data.user) {
+            // Check if de-activated
+            if (data.user.isActive === 0 || data.user.isActive === false) {
+              alert("Your account has been deactivated.");
+              handleLogout();
+              return;
+            }
+            // Update cache/state with fresh data from server
+            setUser(data.user);
+            localStorage.setItem('fm_user', JSON.stringify(data.user));
+          }
+        })
+        .catch((e) => {
+          console.log("Background session validation skipped (network issue)", e);
+        });
+    }
   }, []);
 
   // Data Loading Logic
   const fetchData = async () => {
     const token = localStorage.getItem('fm_token');
-    if (!token) return;
+
+    // logic: if we have a user in state but no token, we are in an invalid state.
+    // However, setUser might be async or we might have just loaded from LS.
+    // Ideally we check token existence. If no token, we can't fetch data.
+    if (!token) {
+      if (user) handleLogout(); // Invalid state: user but no token
+      return;
+    }
 
     try {
-      const res = await fetch('http://localhost:3000/api/data', {
+      const res = await fetch('/api/data', {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      if (res.status === 401 || res.status === 403) {
+        // Token expired or invalid
+        console.warn("Session expired or unauthorized");
+        handleLogout();
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
         if (data.customers) setCustomers(data.customers);
-        if (data.templates) setTemplates(data.templates);
+
+        if (data.templates) {
+          setTemplates(data.templates);
+        }
+
         if (data.campaignSettings) setCampaignSettings(data.campaignSettings);
+
+        const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'superadmin';
+        if (isAdmin) {
+          setBroadcastTarget('Users');
+          const usersRes = await fetch('/api/admin/users', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (usersRes.ok) {
+            setSystemUsers(await usersRes.json());
+          }
+        }
+
+        if (data.storeUrl && user && user.storeUrl !== data.storeUrl) {
+          setUser(prev => prev ? { ...prev, storeUrl: data.storeUrl } : null);
+        }
       }
     } catch (e) {
       console.error("Failed to load data", e);
@@ -187,7 +358,7 @@ const App: React.FC = () => {
     if (!token) return;
 
     try {
-      await fetch('http://localhost:3000/api/data', {
+      await fetch('/api/data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,22 +373,32 @@ const App: React.FC = () => {
     setCampaignSettings(settings);
     // Persist to server
     saveData('campaignSettings', settings);
-    localStorage.setItem('fm_campaign_settings', JSON.stringify(settings));
   };
 
-  const handleLogin = (email: string, storeName: string) => {
-    // In a real flow, auth component passes the full user object, but for now we reconstruct or re-fetch
-    const token = localStorage.getItem('fm_token');
-    // We assume the component or a separate fetch got us the user details roughly
-    const newUser: User = {
-      email,
-      storeName,
-      role: 'admin',
-      status: 'active',
-      // We could decode token to get instanceId if needed, or Auth passes it
-    };
+  const handleUpdateUser = (updates: Partial<User>) => {
+    if (!user) return;
+    const newUser = { ...user, ...updates };
     setUser(newUser);
     localStorage.setItem('fm_user', JSON.stringify(newUser));
+
+
+    // Persist branding/store info to server
+    const token = localStorage.getItem('fm_token');
+    if (token) {
+      fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updates)
+      }).catch(e => console.error("Profile save failed", e));
+    }
+  };
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('fm_user', JSON.stringify(userData));
     setLoading(false);
 
     // Load this tenant's data
@@ -231,6 +412,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('fm_token');
     localStorage.removeItem('fm_user');
   };
 
@@ -252,11 +434,69 @@ const App: React.FC = () => {
   };
 
   const handleDeleteTemplate = (id: number) => {
+    const newTemplates = templates.map(t => t.id === id ? { ...t, deleted: true } : t);
+    setTemplates(newTemplates);
+    saveData('templates', newTemplates);
+  };
+
+  const handleRestoreTemplate = (id: number) => {
+    const newTemplates = templates.map(t => t.id === id ? { ...t, deleted: false } : t);
+    setTemplates(newTemplates);
+    saveData('templates', newTemplates);
+  };
+
+  const handlePermanentDeleteTemplate = (id: number) => {
+    if (!confirm('Are you sure you want to permanently delete this template? This cannot be undone.')) return;
     const newTemplates = templates.filter(t => t.id !== id);
     setTemplates(newTemplates);
     saveData('templates', newTemplates);
   };
 
+
+
+  const handleDeleteCustomer = async (id: number) => {
+    const token = localStorage.getItem('fm_token');
+    if (!token) return;
+
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+
+    try {
+      const res = await fetch(`/api/customers/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setCustomers(customers.filter(c => c.id !== id));
+      } else {
+        alert('Failed to delete customer');
+      }
+    } catch (e) {
+      console.error("Delete failed", e);
+    }
+  };
+
+  const handleRestoreDefaults = async () => {
+    const token = localStorage.getItem('fm_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/templates/restore-defaults', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        alert('Templates have been reset to system defaults successfully!');
+        fetchData(); // Refresh list immediately
+      } else {
+        const err = await res.json();
+        alert(`Failed to restore: ${err.message}`);
+      }
+    } catch (e) {
+      console.error("Restore defaults error", e);
+      alert('Could not connect to server.');
+    }
+  };
 
 
   const handleImportCSV = (file: File) => {
@@ -284,14 +524,14 @@ const App: React.FC = () => {
       const token = localStorage.getItem('fm_token');
       if (!token) return;
       try {
-        const res = await fetch('http://localhost:3000/api/whatsapp/status', {
+        const res = await fetch('/api/whatsapp/status', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           const data = await res.json();
           setWa(prev => ({
             ...prev,
-            status: data.status === 'connected' ? 'connected' : data.status === 'connecting' ? 'connecting' : 'none',
+            status: data.status === 'connected' ? 'connected' : (data.status === 'connecting' || data.status === 'qr_ready') ? 'connecting' : 'none',
             qr: data.qr,
             user: data.user,
           }));
@@ -306,7 +546,7 @@ const App: React.FC = () => {
   const handleConnectWA = async () => {
     setWa(prev => ({ ...prev, status: 'connecting' }));
     const token = localStorage.getItem('fm_token');
-    await fetch('http://localhost:3000/api/whatsapp/connect', {
+    await fetch('/api/whatsapp/connect', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -314,7 +554,7 @@ const App: React.FC = () => {
 
   const handleLogoutWA = async () => {
     const token = localStorage.getItem('fm_token');
-    await fetch('http://localhost:3000/api/whatsapp/logout', {
+    await fetch('/api/whatsapp/logout', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -337,7 +577,7 @@ const App: React.FC = () => {
       if (contact.status === 'Sent') continue;
 
       try {
-        const res = await fetch('http://localhost:3000/api/whatsapp/send', {
+        const res = await fetch('/api/whatsapp/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -345,7 +585,9 @@ const App: React.FC = () => {
           },
           body: JSON.stringify({
             phone: contact.phone,
-            message: template?.content.replace('[name]', contact.name) || 'Hello'
+            message: template?.content
+              .replace(/\[name\]/g, contact.name)
+              .replace(/\[business\]/g, contact.business || '') || 'Hello'
           })
         });
 
@@ -374,138 +616,72 @@ const App: React.FC = () => {
     }
 
     setIsSending(false);
-    alert('Campaign Finished!');
   };
 
   // Initially load customers into broadcast contacts
   useEffect(() => {
-    setBroadcastContacts(customers.map(c => ({
-      name: c.name,
-      phone: c.whatsapp,
-      status: 'Pending'
-    })));
-  }, [customers]);
+    const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'superadmin';
+
+    // Safety check: specific to admin view
+    if (isAdmin && broadcastTarget !== 'Users' && systemUsers.length > 0) {
+      setBroadcastTarget('Users');
+    }
+
+    if ((broadcastTarget === 'Users' || isAdmin) && systemUsers.length > 0) {
+      let filteredUsers = systemUsers;
+      if (broadcastDesignation !== 'All') {
+        filteredUsers = systemUsers.filter(u => u.designation === broadcastDesignation);
+      }
+      setBroadcastContacts(filteredUsers.map(u => ({
+        name: u.name || u.store_name || 'User',
+        phone: u.whatsapp || '',
+        status: 'Pending',
+        business: u.store_name || ''
+      })));
+    } else {
+      setBroadcastContacts(customers.map(c => ({
+        name: c.name,
+        phone: c.whatsapp,
+        status: 'Pending',
+        business: user?.storeName || ''
+      })));
+    }
+  }, [customers, systemUsers, broadcastTarget, broadcastDesignation, user]);
 
   // Auto-run special campaigns check
   useEffect(() => {
     if (!wa || wa.status !== 'connected') return;
 
     const checkCelebrations = async () => {
-      const today = new Date();
-      // Format to "DD Month" e.g. "26 January" or "26 Jan"
-      const day = today.getDate().toString().padStart(2, '0');
-      const month = today.toLocaleString('en-GB', { month: 'short' });
+      const token = localStorage.getItem('fm_token');
+      if (!token) return;
+
+      const now = new Date();
+      const todayISO = now.toISOString().split('T')[0]; // YYYY-MM-DD for tracking run date
+
+      // Format to "DD Month" e.g. "26 January" or "26 Jan" for matching DOB
+      const day = now.getDate().toString().padStart(2, '0');
+      const month = now.toLocaleString('en-GB', { month: 'short' });
       const todayStr = `${day} ${month}`; // "26 Jan"
 
       const birthdayTemplate = campaignSettings.birthdayActive ? templates.find(t => t.id === campaignSettings.birthdayTemplateId) : null;
       const anniversaryTemplate = campaignSettings.anniversaryActive ? templates.find(t => t.id === campaignSettings.anniversaryTemplateId) : null;
 
       let sentCount = 0;
+      let settingsChanged = false;
+      let newSettings = { ...campaignSettings };
+      let hasRunDailyChecks = false;
 
-      for (const customer of customers) {
-        // Birthday check
-        if (birthdayTemplate && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
-          console.log(`Auto-sending Birthday wish to ${customer.name}`);
-          sentCount++;
-          // Simulate WhatsApp send delay
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      // 1. Process Repeater Campaigns (Birthday/Anniversary) - Only run once per day
+      if (campaignSettings.lastRunDate !== todayISO) {
+        console.log("Running Daily Campaign Checks...");
 
-        // Anniversary check
-        if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
-          console.log(`Auto-sending Anniversary wish to ${customer.name}`);
-          sentCount++;
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-
-      if (sentCount > 0) {
-        setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + sentCount }));
-        // In a real app we'd prevent re-sending the same day
-      }
-    };
-
-    // Run check once on connect or settings change, and set up an interval for scheduled tasks
-    const interval = setInterval(checkCelebrations, 60000); // Check every minute
-    checkCelebrations();
-
-    return () => clearInterval(interval);
-  }, [wa.status, campaignSettings, customers, templates]);
-
-  // Combined logic for auto-campaigns (Birthday, Anniversary, and Scheduled)
-  const checkCelebrations = async () => {
-    if (!wa || wa.status !== 'connected') return;
-    const token = localStorage.getItem('fm_token');
-    if (!token) return;
-
-    const today = new Date();
-    // Format to "DD Month" e.g. "26 January" or "26 Jan"
-    const day = today.getDate().toString().padStart(2, '0');
-    const month = today.toLocaleString('en-GB', { month: 'short' });
-    const todayStr = `${day} ${month}`; // "26 Jan"
-
-    const birthdayTemplate = campaignSettings.birthdayActive ? templates.find(t => t.id === campaignSettings.birthdayTemplateId) : null;
-    const anniversaryTemplate = campaignSettings.anniversaryActive ? templates.find(t => t.id === campaignSettings.anniversaryTemplateId) : null;
-
-    let sentCount = 0;
-
-    // 1. Process Repeater Campaigns (Birthday/Anniversary)
-    for (const customer of customers) {
-      // Birthday check
-      if (birthdayTemplate && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
-        try {
-          console.log(`Auto-sending Birthday wish to ${customer.name}`);
-          await fetch('http://localhost:3000/api/whatsapp/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              phone: customer.whatsapp,
-              message: birthdayTemplate.content.replace('[name]', customer.name)
-            })
-          });
-          sentCount++;
-        } catch (e) { console.error('Auto-campaign failed', e); }
-      }
-
-      // Anniversary check
-      if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
-        try {
-          console.log(`Auto-sending Anniversary wish to ${customer.name}`);
-          await fetch('http://localhost:3000/api/whatsapp/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              phone: customer.whatsapp,
-              message: anniversaryTemplate.content.replace('[name]', customer.name)
-            })
-          });
-          sentCount++;
-        } catch (e) { console.error('Auto-campaign failed', e); }
-      }
-    }
-
-    // 2. Process One-time Scheduled Campaigns
-    const now = new Date();
-    let campaignsUpdated = false;
-    const updatedCampaigns = [...(campaignSettings.scheduledCampaigns || [])];
-
-    for (let i = 0; i < updatedCampaigns.length; i++) {
-      const campaign = updatedCampaigns[i];
-      if (campaign.status === 'Pending' && new Date(campaign.scheduledTime) <= now) {
-        const template = templates.find(t => t.id === campaign.templateId);
-        if (template) {
-          console.log(`Starting Scheduled Campaign: ${template.title}`);
-
-          // Send all
-          for (const customer of customers) {
+        for (const customer of customers) {
+          // Birthday check
+          if (birthdayTemplate && customer.dob && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
             try {
-              await fetch('http://localhost:3000/api/whatsapp/send', {
+              console.log(`Auto-sending Birthday wish to ${customer.name}`);
+              await fetch('/api/whatsapp/send', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -513,32 +689,106 @@ const App: React.FC = () => {
                 },
                 body: JSON.stringify({
                   phone: customer.whatsapp,
-                  message: template.content.replace('[name]', customer.name)
+                  message: birthdayTemplate.content
+                    .replace(/\[name\]/g, customer.name)
+                    .replace(/\[business\]/g, user?.storeName || '')
                 })
               });
               sentCount++;
               // Rate limit
               await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (e) { console.error('Scheduled send failed', e); }
+            } catch (e) { console.error('Auto-campaign birthday failed', e); }
           }
 
-          updatedCampaigns[i] = { ...campaign, status: 'Completed' };
-          campaignsUpdated = true;
+          // Anniversary check
+          if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
+            try {
+              console.log(`Auto-sending Anniversary wish to ${customer.name}`);
+              await fetch('/api/whatsapp/send', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  phone: customer.whatsapp,
+                  message: anniversaryTemplate.content
+                    .replace(/\[name\]/g, customer.name)
+                    .replace(/\[business\]/g, user?.storeName || '')
+                })
+              });
+              sentCount++;
+              // Rate limit
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (e) { console.error('Auto-campaign anniversary failed', e); }
+          }
+        }
+
+        // Mark as run for today
+        newSettings.lastRunDate = todayISO;
+        hasRunDailyChecks = true;
+        settingsChanged = true;
+      }
+
+      // 2. Process One-time Scheduled Campaigns
+      const updatedCampaigns = [...(newSettings.scheduledCampaigns || [])];
+      let scheduledUpdated = false;
+
+      for (let i = 0; i < updatedCampaigns.length; i++) {
+        const campaign = updatedCampaigns[i];
+        if (campaign.status === 'Pending' && new Date(campaign.scheduledTime) <= now) {
+          const template = templates.find(t => t.id === campaign.templateId);
+          if (template) {
+            console.log(`Starting Scheduled Campaign: ${template.title}`);
+
+            // Send to all customers
+            for (const customer of customers) {
+              try {
+                await fetch('/api/whatsapp/send', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    phone: customer.whatsapp,
+                    message: template.content
+                      .replace(/\[name\]/g, customer.name)
+                      .replace(/\[business\]/g, user?.storeName || '')
+                  })
+                });
+                sentCount++;
+                // Rate limit
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              } catch (e) { console.error('Scheduled send failed', e); }
+            }
+
+            updatedCampaigns[i] = { ...campaign, status: 'Completed' };
+            scheduledUpdated = true;
+          }
         }
       }
-    }
 
-    if (campaignsUpdated) {
-      handleUpdateCampaignSettings({
-        ...campaignSettings,
-        scheduledCampaigns: updatedCampaigns
-      });
-    }
+      if (scheduledUpdated) {
+        newSettings.scheduledCampaigns = updatedCampaigns;
+        settingsChanged = true;
+      }
 
-    if (sentCount > 0) {
-      setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + sentCount }));
-    }
-  };
+      if (settingsChanged) {
+        handleUpdateCampaignSettings(newSettings);
+      }
+
+      if (sentCount > 0) {
+        setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + sentCount }));
+      }
+    };
+
+    // Run check once on connect or settings change, and set up an interval for scheduled tasks
+    const interval = setInterval(checkCelebrations, 60000); // Check every minute
+    checkCelebrations(); // Run immediately on mount/update
+
+    return () => clearInterval(interval);
+  }, [wa.status, campaignSettings, customers, templates]);
 
   return (
     <Router>
@@ -550,6 +800,8 @@ const App: React.FC = () => {
         templates={templates}
         onSaveTemplate={handleSaveTemplate}
         onDeleteTemplate={handleDeleteTemplate}
+        onRestoreTemplate={handleRestoreTemplate}
+        onPermanentDeleteTemplate={handlePermanentDeleteTemplate}
         wa={wa}
         onConnectWA={handleConnectWA}
         onLogoutWA={handleLogoutWA}
@@ -560,6 +812,15 @@ const App: React.FC = () => {
         isSending={isSending}
         campaignSettings={campaignSettings}
         onUpdateCampaignSettings={handleUpdateCampaignSettings}
+        onUpdateUser={handleUpdateUser}
+        onDeleteCustomer={handleDeleteCustomer}
+        systemUsers={systemUsers}
+        broadcastTarget={broadcastTarget}
+        setBroadcastTarget={setBroadcastTarget}
+        broadcastDesignation={broadcastDesignation}
+        setBroadcastDesignation={setBroadcastDesignation}
+        onRestoreDefaults={handleRestoreDefaults}
+        isInitializing={isInitializing}
       />
     </Router>
   );

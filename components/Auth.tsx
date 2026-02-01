@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { User } from '../types.ts';
 
 interface AuthProps {
-  onLogin: (email: string, storeName: string) => void;
+  onLogin: (user: User) => void;
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
@@ -18,7 +19,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setLoading(true);
     setMessage('');
 
-    const endpoint = isLogin ? 'http://localhost:3000/api/login' : 'http://localhost:3000/api/register';
+    const endpoint = isLogin ? '/api/login' : '/api/register';
     const payload = isLogin ? { email, password } : { email, password, storeName };
 
     try {
@@ -41,7 +42,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         // Save token and user details
         localStorage.setItem('fm_token', data.token);
         // We can also let App handle the user saving via onLogin
-        onLogin(data.user.email, data.user.storeName);
+        onLogin(data.user);
       } else {
         setMessage("Registration successful! Please log in.");
         setIsLogin(true);
@@ -106,28 +107,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                 {isLogin ? 'Security Access' : 'New Directory'}
               </span>
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
-                <button
-                  onClick={() => {
-                    setIsLogin(true);
-                    setMessage('');
-                  }}
-                  className={`${isLogin ? 'bg-white shadow-md text-slate-900 scale-100' : 'text-slate-500 scale-95 opacity-70'
-                    } px-5 py-2 rounded-xl text-xs font-black transition-all duration-300`}
-                >
-                  Log In
-                </button>
-                <button
-                  onClick={() => {
-                    setIsLogin(false);
-                    setMessage('');
-                  }}
-                  className={`${!isLogin ? 'bg-white shadow-md text-slate-900 scale-100' : 'text-slate-500 scale-95 opacity-70'
-                    } px-5 py-2 rounded-xl text-xs font-black transition-all duration-300`}
-                >
-                  Sign Up
-                </button>
-              </div>
+
             </div>
             <h3 className="text-3xl font-bold text-slate-800">
               {isLogin ? 'Welcome Back' : 'Create Admin Account'}
@@ -150,19 +130,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
-            {!isLogin && (
-              <div className="group relative">
-                <label className="text-xs font-bold text-slate-600 mb-2 block ml-1">Store / Branch Name</label>
-                <input
-                  type="text"
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                  placeholder="e.g. Downtown Branch"
-                  required={!isLogin}
-                  className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-red-100 focus:border-red-400 outline-none transition-all placeholder:text-slate-300"
-                />
-              </div>
-            )}
+
 
             <div className="group relative">
               <label className="text-xs font-bold text-slate-600 mb-2 block ml-1">Admin Email</label>
@@ -248,18 +216,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             </div>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-10">
-            {isLogin ? 'New system administrator?' : 'Already have an account?'}
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setMessage('');
-              }}
-              className="text-red-500 font-bold hover:underline ml-1"
-            >
-              {isLogin ? 'Setup Account' : 'Login here'}
-            </button>
-          </p>
+
 
           {/* Decorative Blobs */}
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-red-100 rounded-full blur-3xl opacity-50"></div>

@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Project specific
+server/sessions/
+server/uploads/
+server/data/
+*.db
+*.sqlite
+.env
+.env.*
+! .env.example

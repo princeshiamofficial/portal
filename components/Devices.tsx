@@ -59,12 +59,18 @@ const Devices: React.FC<DevicesProps> = ({ wa, onConnect, onLogout }) => {
                             </div>
                             <span className="px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">Active</span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-1">
-                            {wa.user?.name || formattedNumber(wa.user?.id)}
-                        </h3>
-                        <p className="text-slate-400 text-sm font-medium mb-6">
-                            {formattedNumber(wa.user?.id)}
-                        </p>
+                        <div className="space-y-1 mb-6">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Linked Account</p>
+                            <h3 className="text-xl font-bold text-slate-800">
+                                {wa.user?.name || 'WhatsApp User'}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <i className="fa-solid fa-phone text-[10px] text-slate-300"></i>
+                                <span className="text-slate-400 text-xs font-bold font-mono">
+                                    {formattedNumber(wa.user?.id)}
+                                </span>
+                            </div>
+                        </div>
 
                         <div className="space-y-4 pt-6 border-t border-slate-50">
                             <div className="flex justify-between items-center">

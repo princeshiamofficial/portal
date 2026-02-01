@@ -6,16 +6,21 @@ interface TemplatesProps {
     loading: boolean;
     onSave?: (template: Partial<Template>) => void;
     onDelete?: (id: number) => void;
-    onRestore?: () => void;
+    onRestore?: (id: number) => void;
+    onPermanentDelete?: (id: number) => void;
+    onRestoreDefaults?: () => void;
 }
 
-const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDelete, onRestore }) => {
+const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDelete, onRestore, onPermanentDelete, onRestoreDefaults }) => {
     const [showModal, setShowModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [modalType, setModalType] = useState<'create' | 'edit'>('create');
     const [currentTemplate, setCurrentTemplate] = useState<Partial<Template>>({ title: '', content: '', type: 'Personal' });
     const [templateToDelete, setTemplateToDelete] = useState<number | null>(null);
+
+    const activeTemplates = templates.filter(t => !t.deleted);
+    const deletedTemplates = templates.filter(t => t.deleted);
 
     const openCreateModal = () => {
         setModalType('create');
@@ -48,6 +53,19 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
         setTemplateToDelete(null);
     };
 
+    const handleRestore = (id: number) => {
+        if (onRestore) onRestore(id);
+    };
+
+
+
+    const handleSystemRestore = () => {
+        if (confirm('This will RESET all your templates to the system defaults. Current custom templates will be lost. Continue?') && onRestoreDefaults) {
+            onRestoreDefaults();
+            setShowRestoreModal(false);
+        }
+    };
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         alert('Template copied to clipboard!');
@@ -55,7 +73,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
 
     return (
         <div className="flex-1">
-            <header className="sticky top-0 z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-6 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 py-6 md:py-8 lg:py-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <div className="flex items-center gap-2 text-red-500 mb-2">
                         <span className="h-1 w-8 bg-red-500 rounded-full"></span>
@@ -70,7 +88,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                         onClick={() => setShowRestoreModal(true)}
                         className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm text-sm"
                     >
-                        <i className="fa-solid fa-rotate-left"></i> Restore System
+                        <i className="fa-solid fa-trash-can"></i> Trash {deletedTemplates.length > 0 && <span className="bg-slate-100 text-slate-400 px-1.5 rounded-md text-[10px] ml-1">{deletedTemplates.length}</span>}
                     </button>
                     <button
                         onClick={openCreateModal}
@@ -87,7 +105,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {templates.map((template) => (
+                    {activeTemplates.map((template) => (
                         <div
                             key={template.id}
                             className="template-card bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all relative group h-full flex flex-col"
@@ -174,9 +192,9 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                     required
                                     rows={5}
                                     className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all resize-none"
-                                    placeholder="Hi [name], thank you for choosing us!"
+                                    placeholder="Hi [name], thank you for choosing [business]!"
                                 ></textarea>
-                                <p className="text-[10px] text-slate-400 mt-2 ml-1">Use <code className="bg-slate-100 px-1 rounded font-bold">{'{name}'}</code> or <code className="bg-slate-100 px-1 rounded font-bold">[name]</code> for autocompletion.</p>
+                                <p className="text-[10px] text-slate-400 mt-2 ml-1">Use <code className="bg-slate-100 px-1 rounded font-bold">[name]</code> for recipient name and <code className="bg-slate-100 px-1 rounded font-bold">[business]</code> for store name.</p>
                             </div>
 
                             <div className="pt-4">
@@ -222,31 +240,78 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                 </div>
             )}
 
-            {/* Restore System Templates Modal (Placeholder) */}
+            {/* Trash / Restore Templates Modal */}
             {showRestoreModal && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowRestoreModal(false)}></div>
                     <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden p-8 animate-in fade-in zoom-in duration-200">
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">System Templates</h3>
-                                <p className="text-slate-500 text-sm font-medium mt-1">Manage and restore default system message formats.</p>
+                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Trash Bin</h3>
+                                <p className="text-slate-500 text-sm font-medium mt-1">Recently deleted templates can be restored to your library.</p>
                             </div>
-                            <button
-                                onClick={() => setShowRestoreModal(false)}
-                                className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 transition-all"
-                            >
-                                <i className="fa-solid fa-xmark"></i>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={handleSystemRestore}
+                                    className="h-10 px-4 rounded-full bg-amber-100 text-amber-700 font-bold text-xs flex items-center gap-2 hover:bg-amber-200 transition-all"
+                                    title="Restore System Defaults"
+                                >
+                                    <i className="fa-solid fa-rotate-left"></i>
+                                    <span>Defaults</span>
+                                </button>
+                                <button
+                                    onClick={() => setShowRestoreModal(false)}
+                                    className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 transition-all"
+                                >
+                                    <i className="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
                         </div>
 
+
+
                         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                            <p className="text-center text-slate-400 py-10 font-medium">All system templates are currently active.</p>
+                            {deletedTemplates.length === 0 ? (
+                                <div className="text-center py-20 px-10">
+                                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto mb-4">
+                                        <i className="fa-solid fa-trash-can text-2xl"></i>
+                                    </div>
+                                    <p className="text-slate-400 font-bold">Trash bin is empty</p>
+                                </div>
+                            ) : (
+                                deletedTemplates.map((template) => (
+                                    <div key={template.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100 group">
+                                        <div className="flex-1 overflow-hidden mr-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">#{template.id}</span>
+                                                <h4 className="font-bold text-slate-800 truncate">{template.title}</h4>
+                                            </div>
+                                            <p className="text-xs text-slate-500 truncate">{template.content}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleRestore(template.id)}
+                                                className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                            >
+                                                <i className="fa-solid fa-rotate-left"></i>
+                                                Restore
+                                            </button>
+                                            <button
+                                                onClick={() => onPermanentDelete && onPermanentDelete(template.id)}
+                                                className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
+                                                title="Delete Permanently"
+                                            >
+                                                <i className="fa-solid fa-trash-can text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-slate-50 text-center">
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-loose">
-                                Restoring a system template will make it visible in your library again.
+                                Restored templates will immediately reappear in your main library grid.
                             </p>
                         </div>
                     </div>

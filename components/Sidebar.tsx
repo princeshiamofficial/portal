@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { User } from '../types.ts';
 
@@ -16,6 +16,10 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClose, isCollapsed, toggleCollapse }) => {
     const [profileOpen, setProfileOpen] = useState(false);
+    const [shouldHideQR, setShouldHideQR] = useState(false);
+    const navRef = useRef<HTMLDivElement>(null);
+
+
 
     const navItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-chart-pie', color: 'text-slate-600', hoverColor: 'text-slate-900' },
@@ -23,15 +27,31 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
         { path: '/templates', label: 'Templates', icon: 'fa-paste', color: 'text-slate-500', hoverColor: 'text-red-500' },
         { path: '/devices', label: 'Devices', icon: 'fa-link', color: 'text-slate-500', hoverColor: 'text-amber-500' },
         { path: '/broadcast', label: 'Broadcast', icon: 'fa-message', color: 'text-slate-500', hoverColor: 'text-emerald-500' },
-        { path: '/special-campaign', label: 'Special Campaign', icon: 'fa-star', color: 'text-slate-500', hoverColor: 'text-yellow-500' },
+        { path: '/special-campaign', label: user.role?.toLowerCase().includes('admin') ? 'Schedule Campaign' : 'Special Campaign', icon: 'fa-star', color: 'text-slate-500', hoverColor: 'text-yellow-500' },
     ];
 
-    if (user?.role === 'superadmin') {
-        navItems.push(
-            { path: '/inbox', label: 'Inbox', icon: 'fa-inbox', color: 'text-slate-500', hoverColor: 'text-indigo-500' },
-            { path: '/admin', label: 'Manage Users', icon: 'fa-users', color: 'text-slate-500', hoverColor: 'text-slate-800' }
-        );
-    }
+
+
+    useEffect(() => {
+        if (isCollapsed) return;
+
+        const checkSpace = () => {
+            // Estimate heights to avoid layout thrashing/flickering
+            // Logo (~100px) + Nav Items (~50px each) + QR Section (~260px) + Profile (~100px)
+            const itemHeight = 52;
+            const staticHeights = 120 + 100; // Logo + Profile
+            const qrHeight = 280;
+            const totalNavHeight = navItems.length * itemHeight;
+            const availableHeight = window.innerHeight;
+
+            setShouldHideQR(staticHeights + totalNavHeight + qrHeight > availableHeight);
+        };
+
+        window.addEventListener('resize', checkSpace);
+        checkSpace();
+
+        return () => window.removeEventListener('resize', checkSpace);
+    }, [isCollapsed, navItems.length]);
 
     return (
         <>
@@ -48,16 +68,20 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
             >
                 {/* Brand Logo & Toggle */}
                 <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'} mb-10 transition-all duration-300`}>
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-tr from-red-500 to-orange-400 rounded-lg flex items-center justify-center shadow-md group relative overflow-hidden">
-                            <i className="fa-solid fa-database text-white text-xs relative z-10"></i>
-                        </div>
-                        {!isCollapsed && (
-                            <span className="text-xl font-bold text-slate-800 tracking-tight animate-in fade-in slide-in-from-left-4 duration-500">
-                                Food<span className="text-red-500">Mode</span>
-                            </span>
+                    <div className={`flex items-center gap-2 ${isCollapsed ? '' : 'flex-1 overflow-hidden'}`}>
+                        {user.logo ? (
+                            <img
+                                src={user.logo}
+                                alt="Logo"
+                                className={`${isCollapsed ? 'w-8 h-8 rounded-lg shadow-md bg-white' : 'max-h-16 w-auto max-w-full'} object-contain transition-all duration-300`}
+                            />
+                        ) : (
+                            <div className="w-8 h-8 bg-gradient-to-tr from-red-500 to-orange-400 rounded-lg flex items-center justify-center shadow-md group relative overflow-hidden">
+                                <i className="fa-solid fa-database text-white text-xs relative z-10"></i>
+                            </div>
                         )}
                     </div>
+
 
                     {/* Desktop Collapse Toggle */}
                     <button
@@ -74,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                 </div>
 
                 {/* Navigation */}
-                <nav className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                <nav ref={navRef} className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -109,14 +133,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                     ))}
                 </nav>
 
-                {/* QR Code Section - Hide when collapsed */}
-                {!isCollapsed && (
+                {/* QR Code Section - Only show for regular users/store owners */}
+                {!isCollapsed && !shouldHideQR && user.role?.toLowerCase() === 'user' && (
                     <div className="mb-6 p-4 bg-white border border-slate-100 rounded-3xl shadow-sm mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">Digital Identity</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">Store Identity</p>
                         <div className="aspect-square bg-slate-50 rounded-2xl flex items-center justify-center p-2 border border-dashed border-slate-200 group relative cursor-pointer overflow-hidden">
                             <img
-                                src={qrCode || 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=foodmode-profile'}
-                                alt="My QR Code"
+                                src={qrCode || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/vip?member=${user.memberId || '000000'}`)}`}
+                                alt="Store QR Code"
                                 className="w-full h-full object-contain rounded-xl transition-transform duration-500 group-hover:scale-105"
                             />
                             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] transition-all duration-300 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2">
@@ -124,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                             </div>
                         </div>
                         <p className="text-[9px] text-slate-400 mt-3 text-center leading-tight">
-                            Scan to share your <br /> <b>FoodMode Profile</b>
+                            Scan to join the <br /> <b>VIP Member Program</b>
                         </p>
                     </div>
                 )}
@@ -163,12 +187,16 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                         <div className={`absolute bottom-full ${isCollapsed ? 'left-full ml-4' : 'left-0 w-full mb-3'} bg-white border border-slate-100 rounded-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.1)] overflow-hidden animate-in slide-in-from-bottom-2 duration-300 min-w-[240px]`}>
                             <div className="p-2">
                                 <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Account</div>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-2xl transition-all group text-left">
+                                <NavLink
+                                    to="/settings"
+                                    onClick={() => setProfileOpen(false)}
+                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-2xl transition-all group text-left"
+                                >
                                     <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:text-slate-900 transition-transform">
                                         <i className="fa-solid fa-user-gear text-xs"></i>
                                     </div>
                                     <span className="text-sm font-semibold text-slate-700">Profile Settings</span>
-                                </button>
+                                </NavLink>
                                 <button
                                     onClick={onLogout}
                                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-2xl transition-all group text-left mt-1"
@@ -182,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                         </div>
                     )}
                 </div>
-            </aside>
+            </aside >
         </>
     );
 };
