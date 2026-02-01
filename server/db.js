@@ -3,10 +3,11 @@ import mysql from 'mysql2/promise';
 let pool;
 
 const DB_CONFIG = {
-    host: process.env.DB_HOST || '127.0.0.1', // Use 127.0.0.1 for XAMPP to avoid IPv6 resolution issues
+    host: process.env.DB_HOST || '127.0.0.1',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'foodmode',
+    charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -20,7 +21,7 @@ export async function initDb() {
             user: DB_CONFIG.user,
             password: DB_CONFIG.password
         });
-        await conn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.database}\``);
+        await conn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
         await conn.end();
     } catch (e) {
         console.error("Error checking/creating database:", e);
@@ -152,6 +153,19 @@ export async function initDb() {
             target_role VARCHAR(20) -- 'admin' or 'user'
         )
     `);
+
+    // Fix Charset for existing tables (to support emojis)
+    try {
+        await db.exec(`ALTER DATABASE \`${DB_CONFIG.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await db.exec(`ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await db.exec(`ALTER TABLE customers CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await db.exec(`ALTER TABLE templates CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await db.exec(`ALTER TABLE campaign_settings CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await db.exec(`ALTER TABLE message_logs CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await db.exec(`ALTER TABLE default_templates CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    } catch (e) {
+        console.warn("[Migration] Charset conversion warning (can usually be ignored):", e.message);
+    }
 
     // Seed Default Templates if empty
     const existingDefaults = await db.all('SELECT count(*) as count FROM default_templates');
