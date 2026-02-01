@@ -47,7 +47,8 @@ const SECRET_KEY = process.env.JWT_SECRET || 'foodmode_secret_key_change_in_prod
 
 // Request Logger
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} [Request] ${req.method} ${req.url}`);
+    const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+    console.log(`${bdTime} [Request] ${req.method} ${req.url}`);
     next();
 });
 
@@ -747,9 +748,9 @@ const startCampaignScheduler = () => {
                     continue;
                 }
 
-                const now = new Date();
-                console.log(`[Scheduler] Server Local Time: ${now.toLocaleString()}`);
-                console.log(`[Scheduler] Server ISO Time: ${now.toISOString()}`);
+                const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+                console.log(`[Scheduler] Bangladesh Time (BD): ${now.toLocaleString()}`);
+                console.log(`[Scheduler] Server ISO Time: ${new Date().toISOString()}`);
 
                 const settings = {
                     ...settingsRow,
@@ -761,9 +762,10 @@ const startCampaignScheduler = () => {
                 const templates = await db.all('SELECT * FROM templates WHERE userId = ?', [userId]);
                 const customers = await db.all('SELECT * FROM customers WHERE userId = ?', [userId]);
 
+                // Date format for Birthdays/Anniversaries in BD Time
                 const todayISO = now.toISOString().split('T')[0];
                 const day = now.getDate().toString().padStart(2, '0');
-                const month = now.toLocaleString('en-GB', { month: 'short' });
+                const month = now.toLocaleString('en-GB', { month: 'short', timeZone: "Asia/Dhaka" });
                 const todayStr = `${day} ${month}`;
 
                 let updatesNeeded = false;
