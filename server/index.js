@@ -904,6 +904,11 @@ startCampaignScheduler();
 // Start server after DB is initialized
 (async () => {
     try {
+        console.log('--- Server Startup ---');
+        console.log(`[Config] DB_HOST: ${process.env.DB_HOST || '127.0.0.1'}`);
+        console.log(`[Config] DB_USER: ${process.env.DB_USER || 'root'}`);
+        console.log(`[Config] DB_NAME: ${process.env.DB_NAME || 'foodmode'}`);
+
         console.log('Initializing database...');
         await initDb();
         console.log('Database initialized (MySQL)');
