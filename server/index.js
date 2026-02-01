@@ -690,17 +690,24 @@ app.post('/api/templates/restore-defaults', authenticateToken, async (req, res) 
             return res.status(404).json({ message: 'No default templates found for this role.' });
         }
 
-        // Wipe existing and restore
-        await db.run('DELETE FROM templates WHERE userId = ?', [userId]);
+        // Fetch existing templates to avoid exact duplicates
+        const existingTemplates = await db.all('SELECT title, content FROM templates WHERE userId = ?', [userId]);
 
+        let addedCount = 0;
         for (const template of templatesToInsert) {
-            await db.run(
-                'INSERT INTO templates (userId, title, content, type) VALUES (?, ?, ?, ?)',
-                [userId, template.title, template.content, template.type]
-            );
+            // Only add if exact same title/content doesn't exist already
+            const isDuplicate = existingTemplates.some(t => t.title === template.title && t.content === template.content);
+
+            if (!isDuplicate) {
+                await db.run(
+                    'INSERT INTO templates (userId, title, content, type) VALUES (?, ?, ?, ?)',
+                    [userId, template.title, template.content, template.type]
+                );
+                addedCount++;
+            }
         }
 
-        res.json({ message: 'Templates restored to system defaults.', count: templatesToInsert.length });
+        res.json({ message: 'System default templates added to your library.', count: addedCount });
     } catch (error) {
         console.error('Error restoring templates:', error);
         res.status(500).json({ message: 'Server error restoring templates.' });

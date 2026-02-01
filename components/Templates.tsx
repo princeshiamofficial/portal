@@ -60,7 +60,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
 
 
     const handleSystemRestore = () => {
-        if (confirm('This will RESET all your templates to the system defaults. Current custom templates will be lost. Continue?') && onRestoreDefaults) {
+        if (confirm('This will add all system default templates to your library. Your current custom templates will be preserved. Continue?') && onRestoreDefaults) {
             onRestoreDefaults();
             setShowRestoreModal(false);
         }
