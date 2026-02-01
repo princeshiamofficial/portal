@@ -742,7 +742,14 @@ const startCampaignScheduler = () => {
 
                 // Load Settings and Data
                 const settingsRow = await db.get('SELECT * FROM campaign_settings WHERE userId = ?', [userId]);
-                if (!settingsRow) continue;
+                if (!settingsRow) {
+                    console.log(`[Scheduler] ⚠️ No campaign settings found for user: ${userId}`);
+                    continue;
+                }
+
+                const now = new Date();
+                console.log(`[Scheduler] Server Local Time: ${now.toLocaleString()}`);
+                console.log(`[Scheduler] Server ISO Time: ${now.toISOString()}`);
 
                 const settings = {
                     ...settingsRow,
@@ -754,7 +761,6 @@ const startCampaignScheduler = () => {
                 const templates = await db.all('SELECT * FROM templates WHERE userId = ?', [userId]);
                 const customers = await db.all('SELECT * FROM customers WHERE userId = ?', [userId]);
 
-                const now = new Date();
                 const todayISO = now.toISOString().split('T')[0];
                 const day = now.getDate().toString().padStart(2, '0');
                 const month = now.toLocaleString('en-GB', { month: 'short' });
