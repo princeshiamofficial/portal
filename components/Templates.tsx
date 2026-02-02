@@ -16,15 +16,43 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [modalType, setModalType] = useState<'create' | 'edit'>('create');
-    const [currentTemplate, setCurrentTemplate] = useState<Partial<Template>>({ title: '', content: '', type: 'Personal' });
+    const [currentTemplate, setCurrentTemplate] = useState<Partial<Template>>({ title: '', content: '', type: 'Personal', imageUrl: '' });
     const [templateToDelete, setTemplateToDelete] = useState<number | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const activeTemplates = templates.filter(t => !t.deleted);
     const deletedTemplates = templates.filter(t => t.deleted);
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const token = localStorage.getItem('fm_token');
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.url) {
+                setCurrentTemplate(prev => ({ ...prev, imageUrl: data.url }));
+            }
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Failed to upload image');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const openCreateModal = () => {
         setModalType('create');
-        setCurrentTemplate({ title: '', content: '', type: 'Personal' });
+        setCurrentTemplate({ title: '', content: '', type: 'Personal', imageUrl: '' });
         setShowModal(true);
     };
 
@@ -125,6 +153,11 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                 </button>
                             </div>
                             <h3 className="text-xl font-bold text-slate-800 mb-2">{template.title}</h3>
+                            {template.imageUrl && (
+                                <div className="mb-4 rounded-xl overflow-hidden aspect-video bg-slate-50 border border-slate-100">
+                                    <img src={template.imageUrl} alt={template.title} className="w-full h-full object-cover" />
+                                </div>
+                            )}
                             <p className="text-slate-500 text-sm leading-relaxed flex-1">{template.content}</p>
 
                             <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
@@ -172,6 +205,44 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Image (Optional)</label>
+                                <div className="relative group/upload">
+                                    {currentTemplate.imageUrl ? (
+                                        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-100 aspect-video mb-4">
+                                            <img src={currentTemplate.imageUrl} className="w-full h-full object-cover" alt="Preview" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setCurrentTemplate(prev => ({ ...prev, imageUrl: '' }))}
+                                                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all"
+                                            >
+                                                <i className="fa-solid fa-trash-can text-xs"></i>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex flex-col items-center justify-center w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-slate-300 transition-all overflow-hidden relative">
+                                            {uploading ? (
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <i className="fa-solid fa-circle-notch fa-spin text-slate-400"></i>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Uploading...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover/upload:scale-110 group-hover/upload:text-red-500 transition-all duration-300">
+                                                        <i className="fa-solid fa-image text-lg"></i>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Upload Banner</p>
+                                                        <p className="text-[9px] text-slate-400 font-bold mt-1">PNG, JPG or JPEG</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Title</label>
                                 <input

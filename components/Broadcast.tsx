@@ -332,7 +332,14 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                     {!selectedTemplate ? (
                                         <p className="text-xs text-slate-400 italic font-sans">Please select a template to preview the message format...</p>
                                     ) : (
-                                        <p className="text-sm text-slate-800 leading-relaxed font-sans">{formatPreview(selectedTemplate.content)}</p>
+                                        <>
+                                            {selectedTemplate.imageUrl && (
+                                                <div className="mb-2 rounded-lg overflow-hidden border border-slate-100">
+                                                    <img src={selectedTemplate.imageUrl} alt="Template Attachment" className="w-full h-auto" />
+                                                </div>
+                                            )}
+                                            <p className="text-sm text-slate-800 leading-relaxed font-sans">{formatPreview(selectedTemplate.content)}</p>
+                                        </>
                                     )}
                                     <span className="text-[9px] text-slate-400 font-bold block mt-2 text-right">14:20</span>
                                 </div>

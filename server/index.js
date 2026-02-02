@@ -91,7 +91,17 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Logo Upload Route
+// File Upload Route (General)
+app.post('/api/upload', authenticateToken, upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const protocol = req.protocol === 'http' && req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto'] : req.protocol;
+    const url = `${protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ url });
+});
+
+// Logo Upload Route (Legacy/Specific)
 app.post('/api/upload-logo', authenticateToken, upload.single('logo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
@@ -154,7 +164,7 @@ app.post('/api/register', async (req, res) => {
 app.get('/api/validate-session', authenticateToken, async (req, res) => {
     try {
         const db = await getDb();
-        const user = await db.get('SELECT id, role, isActive, storeName, email FROM users WHERE id = ?', [req.user.id]);
+        const user = await db.get('SELECT id, role, isActive, storeName, email, logo, memberId FROM users WHERE id = ?', [req.user.id]);
 
         if (!user) {
             return res.status(401).json({ valid: false, message: 'User not found' });
@@ -168,7 +178,9 @@ app.get('/api/validate-session', authenticateToken, async (req, res) => {
                 email: user.email,
                 role: user.role,
                 isActive: user.isActive,
-                storeName: user.storeName
+                storeName: user.storeName,
+                logo: user.logo,
+                memberId: user.memberId
             }
         });
     } catch (e) {
@@ -355,8 +367,8 @@ app.post('/api/data', authenticateToken, async (req, res) => {
             await db.run('DELETE FROM templates WHERE userId = ?', [userId]);
             for (const t of body.templates) {
                 await db.run(
-                    'INSERT INTO templates (userId, title, content, type, deleted) VALUES (?, ?, ?, ?, ?)',
-                    [userId, t.title, t.content, t.type, t.deleted ? 1 : 0]
+                    'INSERT INTO templates (userId, title, content, imageUrl, type, deleted) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, t.title, t.content, t.imageUrl || null, t.type, t.deleted ? 1 : 0]
                 );
             }
         }
@@ -650,7 +662,7 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
 app.get('/api/me', authenticateToken, async (req, res) => {
     try {
         const db = await getDb();
-        const user = await db.get('SELECT id, storeName, name, email, role, plan, status, whatsapp, address, seatCapacity, designation FROM users WHERE id = ?', [req.user.id]);
+        const user = await db.get('SELECT id, storeName, name, email, role, plan, status, whatsapp, address, seatCapacity, designation, logo, memberId, isActive FROM users WHERE id = ?', [req.user.id]);
         res.json(user);
     } catch (error) {
         console.error(error);
@@ -660,13 +672,13 @@ app.get('/api/me', authenticateToken, async (req, res) => {
 
 app.post('/api/whatsapp/send', authenticateToken, async (req, res) => {
     try {
-        const { phone, message } = req.body;
+        const { phone, message, imageUrl } = req.body;
         const instanceId = req.user.instanceId;
         if (!instanceId) return res.status(400).json({ message: 'No instance ID found for user' });
 
         if (!phone || !message) return res.status(400).json({ message: 'Phone and message required' });
 
-        await sendMessage(instanceId, phone, message);
+        await sendMessage(instanceId, phone, message, imageUrl);
         res.json({ message: 'Message queued' });
     } catch (error) {
         console.error(error);
@@ -716,8 +728,8 @@ app.post('/api/templates/restore-defaults', authenticateToken, async (req, res) 
 });
 
 const startCampaignScheduler = () => {
-    console.log('[Scheduler] 🚀 Campaign scheduler initialized - runs every minute');
-    cron.schedule('* * * * *', async () => {
+    console.log('[Scheduler] 🚀 Campaign scheduler initialized - runs every 10 seconds');
+    cron.schedule('*/10 * * * * *', async () => {
         const db = await getDb();
         const activeInstances = getActiveInstanceIds();
 
@@ -732,8 +744,21 @@ const startCampaignScheduler = () => {
                     continue;
                 }
 
-                const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
-                console.log(`[Scheduler] Processing user: ${user.storeName} (${user.email}) - BD Time: ${now.toLocaleString()}`);
+                // Robust date handling for Asia/Dhaka
+                const dhakaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+                const year = dhakaNow.getFullYear();
+                const monthNum = String(dhakaNow.getMonth() + 1).padStart(2, '0');
+                const dayNum = String(dhakaNow.getDate()).padStart(2, '0');
+                const hours = String(dhakaNow.getHours()).padStart(2, '0');
+                const minutes = String(dhakaNow.getMinutes()).padStart(2, '0');
+
+                const todayISO = `${year}-${monthNum}-${dayNum}`;
+                const nowISOFull = `${todayISO}T${hours}:${minutes}`;
+
+                const monthName = dhakaNow.toLocaleString('en-GB', { month: 'short' });
+                const todayStr = `${dayNum} ${monthName}`;
+
+                console.log(`[Scheduler] Processing user: ${user.storeName} (${user.email}) - BD Time: ${nowISOFull}`);
 
                 const userId = user.id;
                 const settingsRow = await db.get('SELECT * FROM campaign_settings WHERE userId = ?', [userId]);
@@ -749,54 +774,33 @@ const startCampaignScheduler = () => {
                 const templates = await db.all('SELECT * FROM templates WHERE userId = ?', [userId]);
                 const customers = await db.all('SELECT * FROM customers WHERE userId = ?', [userId]);
 
-                const todayISO = now.toISOString().split('T')[0];
-                const day = now.getDate().toString().padStart(2, '0');
-                const month = now.toLocaleString('en-GB', { month: 'short', timeZone: "Asia/Dhaka" });
-                const todayStr = `${day} ${month}`;
-
                 let updatesNeeded = false;
                 let messagesSent = 0;
 
-                // 1. Daily Checks (Birthday/Anniversary) - Scheduled for 12:00 AM
-                // This triggers as soon as the date changes.
-                const currentHour = now.getHours();
-
-                // We check if "lastRunDate" in DB is different from today
-                // Note: The frontend uses `lastRunDate` in local state, but we should store it in DB to be robust.
-                // Assuming `campaign_settings` table has `lastRunDate` column or we add it safely.
-                // If the column doesn't exist, we might crash. I should probably add the column first in a migration step or handle it.
-                // For now, let's assume we can add it or repurpose.
-
-                // Let's check if we can add the column dynamically if missing, similar to storeUrl
-                try {
-                    await db.exec(`ALTER TABLE campaign_settings ADD COLUMN lastRunDate TEXT`);
-                } catch (e) { /* Column likely exists or we handle logic below */ }
-
-                // Refresh settings after possible schema update (or just use what we have)
-                // Actually, `settingsRow.lastRunDate` would be undefined if column didn't exist before this fetch.
-                // So we rely on the `campaign_settings` having it.
-
+                // 1. Daily Checks (Birthday/Anniversary) - Only run once per day
                 if (settingsRow.lastRunDate !== todayISO) {
-                    console.log(`[Scheduler] ⏰ Midnight Trigger: New day detected (${todayISO}). Running daily campaigns...`);
+                    console.log(`[Scheduler] ⏰ New day detected (${todayISO}). Running daily campaigns...`);
                     const birthdayTemplate = settings.birthdayActive ? templates.find(t => t.id === settings.birthdayTemplateId) : null;
                     const anniversaryTemplate = settings.anniversaryActive ? templates.find(t => t.id === settings.anniversaryTemplateId) : null;
 
                     for (const customer of customers) {
                         if (birthdayTemplate && customer.dob && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
                             console.log(`[Scheduler] Sending Birthday to ${customer.name} (${user.storeName})`);
-                            await sendMessage(instanceId, customer.whatsapp, birthdayTemplate.content.replace('[name]', customer.name));
+                            const personalizedContent = birthdayTemplate.content.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business');
+                            await sendMessage(instanceId, customer.whatsapp, personalizedContent);
                             await db.run(
                                 'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
-                                [userId, 'System', customer.whatsapp, birthdayTemplate.content]
+                                [userId, 'System', customer.whatsapp, personalizedContent]
                             );
                             messagesSent++;
                         }
                         if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
                             console.log(`[Scheduler] Sending Anniversary to ${customer.name} (${user.storeName})`);
-                            await sendMessage(instanceId, customer.whatsapp, anniversaryTemplate.content.replace('[name]', customer.name));
+                            const personalizedContent = anniversaryTemplate.content.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business');
+                            await sendMessage(instanceId, customer.whatsapp, personalizedContent);
                             await db.run(
                                 'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
-                                [userId, 'System', customer.whatsapp, anniversaryTemplate.content]
+                                [userId, 'System', customer.whatsapp, personalizedContent]
                             );
                             messagesSent++;
                         }
@@ -812,7 +816,7 @@ const startCampaignScheduler = () => {
 
                 for (let i = 0; i < updatedCampaigns.length; i++) {
                     const campaign = updatedCampaigns[i];
-                    if (campaign.status === 'Pending' && new Date(campaign.scheduledTime) <= now) {
+                    if (campaign.status === 'Pending' && campaign.scheduledTime <= nowISOFull) {
                         const template = templates.find(t => t.id === campaign.templateId);
                         if (template) {
                             console.log(`[Scheduler] ========================================`);
@@ -826,7 +830,7 @@ const startCampaignScheduler = () => {
                             if (isAdminCampaign) {
                                 // Admin campaign: send to system users filtered by designation
                                 console.log(`[Scheduler] This is an ADMIN campaign targeting: ${campaign.targetRole}`);
-                                const allUsers = await db.all('SELECT id, name, whatsapp, designation FROM users WHERE whatsapp IS NOT NULL AND whatsapp != ""');
+                                const allUsers = await db.all('SELECT id, name, storeName, whatsapp, designation FROM users WHERE whatsapp IS NOT NULL AND whatsapp != ""');
                                 console.log(`[Scheduler] Total users in database: ${allUsers.length}`);
 
                                 const targetUsers = campaign.targetRole === 'All'
@@ -843,10 +847,11 @@ const startCampaignScheduler = () => {
                                 for (const targetUser of targetUsers) {
                                     try {
                                         console.log(`[Scheduler] Attempting to send to: ${targetUser.name} (${targetUser.whatsapp})`);
-                                        await sendMessage(instanceId, targetUser.whatsapp, template.content.replace('[name]', targetUser.name || 'User'));
+                                        const personalizedContent = template.content.replace('[name]', targetUser.name || 'User').replace('[business]', targetUser.storeName || 'our business');
+                                        await sendMessage(instanceId, targetUser.whatsapp, personalizedContent, template.imageUrl);
                                         await db.run(
                                             'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
-                                            [userId, 'Campaign', targetUser.whatsapp, template.content]
+                                            [userId, 'Campaign', targetUser.whatsapp, personalizedContent]
                                         );
                                         messagesSent++;
                                         console.log(`[Scheduler] ✅ Message sent successfully to ${targetUser.name}`);
@@ -862,10 +867,11 @@ const startCampaignScheduler = () => {
                                 for (const customer of customers) {
                                     try {
                                         console.log(`[Scheduler] Attempting to send to customer: ${customer.name} (${customer.whatsapp})`);
-                                        await sendMessage(instanceId, customer.whatsapp, template.content.replace('[name]', customer.name));
+                                        const personalizedContent = template.content.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business');
+                                        await sendMessage(instanceId, customer.whatsapp, personalizedContent, template.imageUrl);
                                         await db.run(
                                             'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
-                                            [userId, 'Campaign', customer.whatsapp, template.content]
+                                            [userId, 'Campaign', customer.whatsapp, personalizedContent]
                                         );
                                         messagesSent++;
                                         console.log(`[Scheduler] ✅ Message sent successfully to ${customer.name}`);

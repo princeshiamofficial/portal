@@ -119,7 +119,7 @@ export const logoutSession = async (instanceId) => {
     return false;
 };
 
-export const sendMessage = async (instanceId, number, message) => {
+export const sendMessage = async (instanceId, number, message, imageUrl = null) => {
     const socket = sessions[instanceId];
     if (!socket || connectionStatus[instanceId] !== 'connected') {
         throw new Error('Session not connected');
@@ -132,5 +132,12 @@ export const sendMessage = async (instanceId, number, message) => {
     const delay = Math.floor(Math.random() * 2000) + 1000;
     await new Promise(resolve => setTimeout(resolve, delay));
 
-    await socket.sendMessage(formattedNumber, { text: message });
+    if (imageUrl) {
+        await socket.sendMessage(formattedNumber, {
+            image: { url: imageUrl },
+            caption: message
+        });
+    } else {
+        await socket.sendMessage(formattedNumber, { text: message });
+    }
 };

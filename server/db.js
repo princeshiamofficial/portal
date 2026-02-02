@@ -106,6 +106,7 @@ export async function initDb() {
             userId INT,
             title TEXT,
             content TEXT,
+            imageUrl TEXT,
             type VARCHAR(50),
             deleted TINYINT DEFAULT 0,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -113,6 +114,7 @@ export async function initDb() {
     `);
 
     try { await db.exec(`ALTER TABLE templates ADD COLUMN deleted TINYINT DEFAULT 0`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates ADD COLUMN imageUrl TEXT`); } catch (e) { }
 
     // Campaign Settings table
     await db.exec(`

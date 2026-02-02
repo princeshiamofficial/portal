@@ -8,6 +8,7 @@ interface SpecialCampaignProps {
     onUpdateSettings: (settings: SpecialCampaignSettings) => void;
     customers: Customer[];
     onRunManual: (templateId: number, customerIds: number[]) => void;
+    onRefreshData?: () => void;
 }
 
 const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
@@ -16,7 +17,8 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
     settings,
     onUpdateSettings,
     customers,
-    onRunManual
+    onRunManual,
+    onRefreshData
 }) => {
     const [showSelector, setShowSelector] = useState<'birthday' | 'anniversary' | 'schedule' | null>(null);
     const [scheduleDateTime, setScheduleDateTime] = useState('');
@@ -32,6 +34,17 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
             return () => clearTimeout(t);
         }
     }, [showToast]);
+
+    // Local polling for campaign status updates
+    React.useEffect(() => {
+        if (!onRefreshData) return;
+
+        const poll = setInterval(() => {
+            onRefreshData();
+        }, 2000);
+
+        return () => clearInterval(poll);
+    }, [onRefreshData]);
 
     const handleSelectTemplate = (templateId: number) => {
         if (showSelector === 'birthday') {
@@ -425,49 +438,51 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
             )}
 
             {/* Recent Logic Feedback */}
-            <div className="mt-8">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-slate-800">Auto-Campaign Status</h3>
-                    <div className="flex items-center gap-2">
+            {!isAdmin && (
+                <div className="mt-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-black text-slate-800">Auto-Campaign Status</h3>
+                        <div className="flex items-center gap-2">
+                            {(settings.birthdayActive || settings.anniversaryActive) ? (
+                                <>
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                    </span>
+                                    <span className="text-xs font-black uppercase tracking-widest text-emerald-600">System Monitoring</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-slate-400"></span>
+                                    </span>
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">System Idle</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex flex-col items-center justify-center text-center py-16">
                         {(settings.birthdayActive || settings.anniversaryActive) ? (
                             <>
-                                <span className="relative flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                                </span>
-                                <span className="text-xs font-black uppercase tracking-widest text-emerald-600">System Monitoring</span>
+                                <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-[2rem] flex items-center justify-center text-3xl mb-6">
+                                    <i className="fa-solid fa-shield-check"></i>
+                                </div>
+                                <h4 className="text-xl font-bold text-slate-800 mb-2">System is Watching</h4>
+                                <p className="text-slate-500 max-w-md mx-auto">When your WhatsApp is connected, the system will automatically scan for celebrations and send your active templates.</p>
                             </>
                         ) : (
                             <>
-                                <span className="relative flex h-3 w-3">
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-slate-400"></span>
-                                </span>
-                                <span className="text-xs font-black uppercase tracking-widest text-slate-400">System Idle</span>
+                                <div className="w-20 h-20 bg-slate-50 text-slate-400 rounded-[2rem] flex items-center justify-center text-3xl mb-6">
+                                    <i className="fa-solid fa-moon"></i>
+                                </div>
+                                <h4 className="text-xl font-bold text-slate-800 mb-2">Automation Paused</h4>
+                                <p className="text-slate-500 max-w-md mx-auto">Toggle any campaign to "Active" to start automatic customer outreach.</p>
                             </>
                         )}
                     </div>
                 </div>
-
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex flex-col items-center justify-center text-center py-16">
-                    {(settings.birthdayActive || settings.anniversaryActive) ? (
-                        <>
-                            <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-[2rem] flex items-center justify-center text-3xl mb-6">
-                                <i className="fa-solid fa-shield-check"></i>
-                            </div>
-                            <h4 className="text-xl font-bold text-slate-800 mb-2">System is Watching</h4>
-                            <p className="text-slate-500 max-w-md mx-auto">When your WhatsApp is connected, the system will automatically scan for celebrations and send your active templates.</p>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-20 h-20 bg-slate-50 text-slate-400 rounded-[2rem] flex items-center justify-center text-3xl mb-6">
-                                <i className="fa-solid fa-moon"></i>
-                            </div>
-                            <h4 className="text-xl font-bold text-slate-800 mb-2">Automation Paused</h4>
-                            <p className="text-slate-500 max-w-md mx-auto">Toggle any campaign to "Active" to start automatic customer outreach.</p>
-                        </>
-                    )}
-                </div>
-            </div>
+            )}
             {/* Validation Toast */}
             {showToast && (
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">

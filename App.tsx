@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Auth from './components/Auth';
 import Layout from './components/Layout';
@@ -45,6 +45,7 @@ const AppContent: React.FC<{
   setBroadcastDesignation: (d: string) => void;
   onRestoreDefaults: () => void;
   isInitializing: boolean;
+  onRefreshData: () => void;
 }> = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -209,6 +210,7 @@ const AppContent: React.FC<{
             settings={props.campaignSettings}
             onUpdateSettings={props.onUpdateCampaignSettings}
             customers={props.customers}
+            onRefreshData={props.onRefreshData}
             onRunManual={(tid, cids) => {
               // Logic to run for specific customers if needed
               console.log('Running manual campaign', tid, cids);
@@ -245,7 +247,7 @@ const App: React.FC = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const [wa, setWa] = useState<WhatsAppSession>({
-    status: 'disconnected',
+    status: 'none',
     qr: null,
     user: undefined
   });
@@ -405,7 +407,7 @@ const App: React.FC = () => {
     fetchData();
   };
 
-  // Init data on load if user exists
+  // Handle manual data refresh
   useEffect(() => {
     if (user) fetchData();
   }, [user]);
@@ -520,7 +522,8 @@ const App: React.FC = () => {
   // Poll WhatsApp Status
   useEffect(() => {
     if (!user) return;
-    const poll = setInterval(async () => {
+
+    const checkStatus = async () => {
       const token = localStorage.getItem('fm_token');
       if (!token) return;
       try {
@@ -536,10 +539,11 @@ const App: React.FC = () => {
             user: data.user,
           }));
         }
-      } catch (e) {
-        // silent fail
-      }
-    }, 3000);
+      } catch (e) { }
+    };
+
+    checkStatus(); // Immediate check
+    const poll = setInterval(checkStatus, 3000);
     return () => clearInterval(poll);
   }, [user]);
 
@@ -587,7 +591,8 @@ const App: React.FC = () => {
             phone: contact.phone,
             message: template?.content
               .replace(/\[name\]/g, contact.name)
-              .replace(/\[business\]/g, contact.business || '') || 'Hello'
+              .replace(/\[business\]/g, contact.business || '') || 'Hello',
+            imageUrl: template?.imageUrl
           })
         });
 
@@ -648,147 +653,10 @@ const App: React.FC = () => {
     }
   }, [customers, systemUsers, broadcastTarget, broadcastDesignation, user]);
 
-  // Auto-run special campaigns check
+  // Removed redundant frontend scheduler - handled by backend cron job for reliability
   useEffect(() => {
-    if (!wa || wa.status !== 'connected') return;
-
-    const checkCelebrations = async () => {
-      const token = localStorage.getItem('fm_token');
-      if (!token) return;
-
-      const now = new Date();
-      const todayISO = now.toISOString().split('T')[0]; // YYYY-MM-DD for tracking run date
-
-      // Format to "DD Month" e.g. "26 January" or "26 Jan" for matching DOB
-      const day = now.getDate().toString().padStart(2, '0');
-      const month = now.toLocaleString('en-GB', { month: 'short' });
-      const todayStr = `${day} ${month}`; // "26 Jan"
-
-      const birthdayTemplate = campaignSettings.birthdayActive ? templates.find(t => t.id === campaignSettings.birthdayTemplateId) : null;
-      const anniversaryTemplate = campaignSettings.anniversaryActive ? templates.find(t => t.id === campaignSettings.anniversaryTemplateId) : null;
-
-      let sentCount = 0;
-      let settingsChanged = false;
-      let newSettings = { ...campaignSettings };
-      let hasRunDailyChecks = false;
-
-      // 1. Process Repeater Campaigns (Birthday/Anniversary) - Only run once per day
-      if (campaignSettings.lastRunDate !== todayISO) {
-        console.log("Running Daily Campaign Checks...");
-
-        for (const customer of customers) {
-          // Birthday check
-          if (birthdayTemplate && customer.dob && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
-            try {
-              console.log(`Auto-sending Birthday wish to ${customer.name}`);
-              await fetch('/api/whatsapp/send', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                  phone: customer.whatsapp,
-                  message: birthdayTemplate.content
-                    .replace(/\[name\]/g, customer.name)
-                    .replace(/\[business\]/g, user?.storeName || '')
-                })
-              });
-              sentCount++;
-              // Rate limit
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (e) { console.error('Auto-campaign birthday failed', e); }
-          }
-
-          // Anniversary check
-          if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
-            try {
-              console.log(`Auto-sending Anniversary wish to ${customer.name}`);
-              await fetch('/api/whatsapp/send', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                  phone: customer.whatsapp,
-                  message: anniversaryTemplate.content
-                    .replace(/\[name\]/g, customer.name)
-                    .replace(/\[business\]/g, user?.storeName || '')
-                })
-              });
-              sentCount++;
-              // Rate limit
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (e) { console.error('Auto-campaign anniversary failed', e); }
-          }
-        }
-
-        // Mark as run for today
-        newSettings.lastRunDate = todayISO;
-        hasRunDailyChecks = true;
-        settingsChanged = true;
-      }
-
-      // 2. Process One-time Scheduled Campaigns
-      const updatedCampaigns = [...(newSettings.scheduledCampaigns || [])];
-      let scheduledUpdated = false;
-
-      for (let i = 0; i < updatedCampaigns.length; i++) {
-        const campaign = updatedCampaigns[i];
-        if (campaign.status === 'Pending' && new Date(campaign.scheduledTime) <= now) {
-          const template = templates.find(t => t.id === campaign.templateId);
-          if (template) {
-            console.log(`Starting Scheduled Campaign: ${template.title}`);
-
-            // Send to all customers
-            for (const customer of customers) {
-              try {
-                await fetch('/api/whatsapp/send', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                    phone: customer.whatsapp,
-                    message: template.content
-                      .replace(/\[name\]/g, customer.name)
-                      .replace(/\[business\]/g, user?.storeName || '')
-                  })
-                });
-                sentCount++;
-                // Rate limit
-                await new Promise(resolve => setTimeout(resolve, 1000));
-              } catch (e) { console.error('Scheduled send failed', e); }
-            }
-
-            updatedCampaigns[i] = { ...campaign, status: 'Completed' };
-            scheduledUpdated = true;
-          }
-        }
-      }
-
-      if (scheduledUpdated) {
-        newSettings.scheduledCampaigns = updatedCampaigns;
-        settingsChanged = true;
-      }
-
-      if (settingsChanged) {
-        handleUpdateCampaignSettings(newSettings);
-      }
-
-      if (sentCount > 0) {
-        setBroadcastStats(prev => ({ totalSentToday: prev.totalSentToday + sentCount }));
-      }
-    };
-
-    // Run check once on connect or settings change, and set up an interval for scheduled tasks
-    const interval = setInterval(checkCelebrations, 60000); // Check every minute
-    checkCelebrations(); // Run immediately on mount/update
-
-    return () => clearInterval(interval);
-  }, [wa.status, campaignSettings, customers, templates]);
+    // This effect is now empty as the scheduler has been moved to the server
+  }, []);
 
   return (
     <Router>
@@ -821,6 +689,7 @@ const App: React.FC = () => {
         setBroadcastDesignation={setBroadcastDesignation}
         onRestoreDefaults={handleRestoreDefaults}
         isInitializing={isInitializing}
+        onRefreshData={fetchData}
       />
     </Router>
   );
