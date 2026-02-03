@@ -23,6 +23,14 @@ export async function initDb() {
             password: DB_CONFIG.password
         });
         await conn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+        try {
+            await conn.query('SET GLOBAL max_allowed_packet=67108864'); // 64MB
+            console.log('Checked/Updated MySQL max_allowed_packet to 64MB');
+        } catch (e) {
+            console.warn('Warning: Could not set max_allowed_packet (might limit large file uploads):', e.message);
+        }
+
         await conn.end();
     } catch (e) {
         console.error("Error checking/creating database:", e);
@@ -106,7 +114,9 @@ export async function initDb() {
             userId INT,
             title TEXT,
             content TEXT,
-            imageUrl TEXT,
+            imageUrl LONGTEXT,
+            videoUrl LONGTEXT,
+            mediaCaption TEXT,
             type VARCHAR(50),
             deleted TINYINT DEFAULT 0,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -114,7 +124,9 @@ export async function initDb() {
     `);
 
     try { await db.exec(`ALTER TABLE templates ADD COLUMN deleted TINYINT DEFAULT 0`); } catch (e) { }
-    try { await db.exec(`ALTER TABLE templates ADD COLUMN imageUrl TEXT`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates ADD COLUMN imageUrl LONGTEXT`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates ADD COLUMN videoUrl LONGTEXT`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates ADD COLUMN mediaCaption TEXT`); } catch (e) { }
 
     // Campaign Settings table
     await db.exec(`

@@ -157,6 +157,9 @@ const AppContent: React.FC<{
     ? props.templates.filter(t => !t.title.includes('Birthday') && !t.title.includes('Anniversary'))
     : props.templates;
 
+  // Final filtered list for selection (Broadcast, Special Campaigns) - Exclude Deleted
+  const activeTemplates = filteredTemplates.filter(t => !t.deleted);
+
   return (
     <Layout
       user={props.user}
@@ -188,7 +191,7 @@ const AppContent: React.FC<{
         } />
         <Route path="/broadcast" element={
           <Broadcast
-            templates={filteredTemplates}
+            templates={activeTemplates}
             contacts={props.broadcastContacts}
             wa={props.wa}
             stats={props.broadcastStats}
@@ -206,7 +209,7 @@ const AppContent: React.FC<{
         <Route path="/special-campaign" element={
           <SpecialCampaign
             user={props.user}
-            templates={filteredTemplates}
+            templates={activeTemplates}
             settings={props.campaignSettings}
             onUpdateSettings={props.onUpdateCampaignSettings}
             customers={props.customers}
@@ -216,12 +219,6 @@ const AppContent: React.FC<{
               console.log('Running manual campaign', tid, cids);
             }}
           />
-        } />
-        <Route path="/insights" element={
-          <div className="flex flex-col items-center justify-center h-full text-slate-400">
-            <i className="fa-solid fa-wand-magic-sparkles text-6xl mb-4 opacity-20"></i>
-            <p className="font-bold text-xl">AI Insights Coming Soon</p>
-          </div>
         } />
 
         <Route path="/settings" element={
@@ -424,10 +421,14 @@ const App: React.FC = () => {
       newTemplates = templates.map(t => t.id === template.id ? { ...t, ...template } as Template : t);
     } else {
       const newTemplate: Template = {
-        id: templates.length + 1, // Simple ID gen, conflict risk in real app
+        id: Date.now(),
         title: template.title || '',
         content: template.content || '',
-        type: template.type || 'Personal'
+        type: (template.type as any) || 'Personal',
+        imageUrl: template.imageUrl,
+        videoUrl: template.videoUrl,
+        mediaCaption: template.mediaCaption,
+        deleted: false
       };
       newTemplates = [...templates, newTemplate];
     }
@@ -591,8 +592,12 @@ const App: React.FC = () => {
             phone: contact.phone,
             message: template?.content
               .replace(/\[name\]/g, contact.name)
-              .replace(/\[business\]/g, contact.business || '') || 'Hello',
-            imageUrl: template?.imageUrl
+              .replace(/\[business\]/g, contact.business || '') || '',
+            image: template?.imageUrl,
+            video: template?.videoUrl,
+            caption: template?.mediaCaption
+              ? template.mediaCaption.replace(/\[name\]/g, contact.name).replace(/\[business\]/g, contact.business || '')
+              : undefined
           })
         });
 

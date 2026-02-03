@@ -11,6 +11,7 @@ export enum View {
 }
 
 export interface User {
+    id: number;
     storeName: string;
     email: string;
     role: string;
@@ -36,8 +37,10 @@ export interface Template {
     id: number;
     title: string;
     content: string;
-    imageUrl?: string;
     type: 'Personal' | 'System' | 'Promotion';
+    imageUrl?: string;
+    videoUrl?: string;
+    mediaCaption?: string;
     is_hidden?: boolean;
     deleted?: boolean;
 }

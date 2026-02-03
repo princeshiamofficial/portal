@@ -203,32 +203,42 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                     </div>
                 </div>
 
-                {/* Quick Identity Section */}
-                <div className="lg:col-span-4 bg-slate-900 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
+                {/* System Status Dashboard (From User Request) */}
+                <div className="lg:col-span-4 bg-[#111827] p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group border border-white/5 flex flex-col">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500 rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
                     <h3 className="text-xl font-black mb-6 relative z-10 tracking-tight">System Status</h3>
-                    <div className="space-y-6 relative z-10">
-                        <div className="p-5 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+
+                    <div className="space-y-6 relative z-10 flex-1 flex flex-col justify-center">
+                        <div className="p-5 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-md">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60">API Synchronization</span>
-                                <span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">Optimal</span>
+                                <span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full">Optimal</span>
                             </div>
-                            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div className="w-4/5 h-full bg-emerald-500 rounded-full"></div>
+                            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                <div className="w-[85%] h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.3)]"></div>
                             </div>
                         </div>
 
-                        <div className="p-5 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+                        <div className="p-5 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-md">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Session Uptime</span>
-                                <span className="text-[10px] font-black text-white bg-white/10 px-2 py-0.5 rounded-full">99.9%</span>
+                                <span className="text-[10px] font-black text-white bg-white/10 px-2.5 py-1 rounded-full">99.9%</span>
                             </div>
-                            <div className="flex gap-1.5 items-end h-8">
-                                {[40, 70, 45, 90, 65, 80, 55, 95, 75, 85].map((h, i) => (
-                                    <div key={i} className="flex-1 bg-red-500 rounded-t-sm" style={{ height: `${h}%` }}></div>
+                            <div className="flex gap-1.5 items-end h-16">
+                                {[15, 25, 18, 40, 30, 35, 28, 45, 32, 38].map((h, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex-1 bg-red-500/80 rounded-t-sm hover:bg-red-400 transition-all duration-300"
+                                        style={{ height: `${h * 2}%` }}
+                                    ></div>
                                 ))}
                             </div>
                         </div>
+                    </div>
+
+                    <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between opacity-40">
+                        <span className="text-[9px] font-bold uppercase tracking-widest">Instance Ready</span>
+                        <i className="fa-solid fa-check-double text-[10px]"></i>
                     </div>
                 </div>
             </div>

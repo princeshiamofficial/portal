@@ -16,43 +16,68 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [modalType, setModalType] = useState<'create' | 'edit'>('create');
-    const [currentTemplate, setCurrentTemplate] = useState<Partial<Template>>({ title: '', content: '', type: 'Personal', imageUrl: '' });
+    const [currentTemplate, setCurrentTemplate] = useState<Partial<Template>>({ title: '', content: '', type: 'Personal' });
+    const [activeTab, setActiveTab] = useState<'text' | 'image' | 'video'>('text');
     const [templateToDelete, setTemplateToDelete] = useState<number | null>(null);
     const [uploading, setUploading] = useState(false);
+
+    // Initial tab determination when editing
+    React.useEffect(() => {
+        if (showModal && modalType === 'edit') {
+            if (currentTemplate.imageUrl) setActiveTab('image');
+            else if (currentTemplate.videoUrl) setActiveTab('video');
+            else setActiveTab('text');
+        } else if (showModal && modalType === 'create') {
+            setActiveTab('text');
+        }
+    }, [showModal, modalType]);
+
+    const handleTabChange = (tab: 'text' | 'image' | 'video') => {
+        setActiveTab(tab);
+        if (tab === 'text') {
+            setCurrentTemplate(prev => ({ ...prev, imageUrl: '', videoUrl: '', mediaCaption: '' }));
+        } else if (tab === 'image') {
+            setCurrentTemplate(prev => ({ ...prev, videoUrl: '', content: '' }));
+        } else if (tab === 'video') {
+            setCurrentTemplate(prev => ({ ...prev, imageUrl: '', content: '' }));
+        }
+    };
+
+    const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validation for file size
+        const maxSize = 30 * 1024 * 1024; // 30MB
+        if (file.size > maxSize) {
+            alert(`File is too large. Maximum size is 30MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`);
+            return;
+        }
+
+        setUploading(true);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+            if (type === 'image') {
+                setCurrentTemplate(prev => ({ ...prev, imageUrl: base64, videoUrl: '' }));
+            } else {
+                setCurrentTemplate(prev => ({ ...prev, videoUrl: base64, imageUrl: '' }));
+            }
+            setUploading(false);
+        };
+        reader.onerror = () => {
+            alert('Failed to read file. Please try again.');
+            setUploading(false);
+        };
+        reader.readAsDataURL(file);
+    };
 
     const activeTemplates = templates.filter(t => !t.deleted);
     const deletedTemplates = templates.filter(t => t.deleted);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const token = localStorage.getItem('fm_token');
-        try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: formData
-            });
-            const data = await res.json();
-            if (data.url) {
-                setCurrentTemplate(prev => ({ ...prev, imageUrl: data.url }));
-            }
-        } catch (error) {
-            console.error('Upload failed:', error);
-            alert('Failed to upload image');
-        } finally {
-            setUploading(false);
-        }
-    };
-
     const openCreateModal = () => {
         setModalType('create');
-        setCurrentTemplate({ title: '', content: '', type: 'Personal', imageUrl: '' });
+        setCurrentTemplate({ title: '', content: '', type: 'Personal' });
         setShowModal(true);
     };
 
@@ -64,6 +89,28 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Manual validation for conditional requirement
+        if (!currentTemplate.title?.trim()) {
+            alert('Please provide a template title.');
+            return;
+        }
+
+        if (activeTab === 'text' && !currentTemplate.content?.trim()) {
+            alert('Please provide message content for the text template.');
+            return;
+        }
+
+        if (activeTab === 'image' && !currentTemplate.imageUrl) {
+            alert('Please upload an image for the image template.');
+            return;
+        }
+
+        if (activeTab === 'video' && !currentTemplate.videoUrl?.trim()) {
+            alert('Please provide a video URL or upload a video.');
+            return;
+        }
+
         if (onSave) onSave(currentTemplate);
         setShowModal(false);
     };
@@ -153,11 +200,33 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                 </button>
                             </div>
                             <h3 className="text-xl font-bold text-slate-800 mb-2">{template.title}</h3>
-                            {template.imageUrl && (
-                                <div className="mb-4 rounded-xl overflow-hidden aspect-video bg-slate-50 border border-slate-100">
-                                    <img src={template.imageUrl} alt={template.title} className="w-full h-full object-cover" />
+
+                            {/* Media Preview in Card */}
+                            {(template.imageUrl || template.videoUrl) && (
+                                <div className="mb-4 rounded-2xl overflow-hidden border border-slate-100 aspect-video bg-slate-50 relative group/media">
+                                    {template.imageUrl ? (
+                                        <img src={template.imageUrl} className="w-full h-full object-cover" alt="Template Media" />
+                                    ) : (
+                                        <div className="w-full h-full relative bg-slate-900 flex items-center justify-center">
+                                            <video
+                                                src={template.videoUrl}
+                                                className="w-full h-full object-contain"
+                                                controls
+                                                preload="metadata"
+                                            />
+                                        </div>
+                                    )}
+                                    {template.mediaCaption && (
+                                        <div className="absolute inset-x-0 bottom-0 bg-slate-900/60 backdrop-blur-sm p-3">
+                                            <p className="text-white text-[10px] font-bold truncate">
+                                                <i className="fa-solid fa-quote-left mr-2 opacity-50"></i>
+                                                {template.mediaCaption}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
+
                             <p className="text-slate-500 text-sm leading-relaxed flex-1">{template.content}</p>
 
                             <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
@@ -188,7 +257,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
                     <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden p-8 animate-in fade-in zoom-in duration-200">
                         <div className="mb-8">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h3 className="text-2xl font-black text-slate-900 tracking-tight">
                                         {modalType === 'create' ? 'Create Template' : 'Edit Template'}
@@ -202,47 +271,37 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                     <i className="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
+
+                            {/* Tab Navigation */}
+                            <div className="flex bg-slate-50 p-1.5 rounded-2xl">
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('text')}
+                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'text' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <i className="fa-solid fa-align-left text-[12px]"></i>
+                                    <span>Text</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('image')}
+                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'image' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <i className="fa-solid fa-image text-[12px]"></i>
+                                    <span>Image</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('video')}
+                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'video' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <i className="fa-solid fa-video text-[12px]"></i>
+                                    <span>Video</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Image (Optional)</label>
-                                <div className="relative group/upload">
-                                    {currentTemplate.imageUrl ? (
-                                        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-100 aspect-video mb-4">
-                                            <img src={currentTemplate.imageUrl} className="w-full h-full object-cover" alt="Preview" />
-                                            <button
-                                                type="button"
-                                                onClick={() => setCurrentTemplate(prev => ({ ...prev, imageUrl: '' }))}
-                                                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all"
-                                            >
-                                                <i className="fa-solid fa-trash-can text-xs"></i>
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <label className="flex flex-col items-center justify-center w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-slate-300 transition-all overflow-hidden relative">
-                                            {uploading ? (
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <i className="fa-solid fa-circle-notch fa-spin text-slate-400"></i>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Uploading...</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover/upload:scale-110 group-hover/upload:text-red-500 transition-all duration-300">
-                                                        <i className="fa-solid fa-image text-lg"></i>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Upload Banner</p>
-                                                        <p className="text-[9px] text-slate-400 font-bold mt-1">PNG, JPG or JPEG</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-                                        </label>
-                                    )}
-                                </div>
-                            </div>
-
+                        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Title</label>
                                 <input
@@ -255,18 +314,120 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                 />
                             </div>
 
-                            <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Message Content</label>
-                                <textarea
-                                    value={currentTemplate.content}
-                                    onChange={(e) => setCurrentTemplate({ ...currentTemplate, content: e.target.value })}
-                                    required
-                                    rows={5}
-                                    className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all resize-none"
-                                    placeholder="Hi [name], thank you for choosing [business]!"
-                                ></textarea>
-                                <p className="text-[10px] text-slate-400 mt-2 ml-1">Use <code className="bg-slate-100 px-1 rounded font-bold">[name]</code> for recipient name and <code className="bg-slate-100 px-1 rounded font-bold">[business]</code> for store name.</p>
-                            </div>
+                            {activeTab === 'text' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Message Content</label>
+                                        <textarea
+                                            value={currentTemplate.content}
+                                            onChange={(e) => setCurrentTemplate({ ...currentTemplate, content: e.target.value })}
+                                            rows={8}
+                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all resize-none font-sans"
+                                            placeholder="Write your message here... Use [name] for recipient."
+                                        ></textarea>
+                                        <p className="text-[10px] text-slate-400 mt-2 ml-1">Use <code className="bg-slate-100 px-1 rounded font-bold">[name]</code> for recipient name and <code className="bg-slate-100 px-1 rounded font-bold">[business]</code> for store name.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'image' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Image</label>
+                                        <div className="relative">
+                                            {currentTemplate.imageUrl ? (
+                                                <div className="relative rounded-2xl overflow-hidden border-2 border-slate-100 aspect-video group/img shadow-sm">
+                                                    <img src={currentTemplate.imageUrl} className="w-full h-full object-cover" alt="Preview" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCurrentTemplate(prev => ({ ...prev, imageUrl: '' }))}
+                                                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover/img:opacity-100"
+                                                    >
+                                                        <i className="fa-solid fa-trash-can text-xs"></i>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <label className="flex flex-col items-center justify-center w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-slate-300 transition-all overflow-hidden relative">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <i className="fa-solid fa-image text-slate-400 text-2xl"></i>
+                                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Upload Image</span>
+                                                    </div>
+                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleMediaUpload(e, 'image')} disabled={uploading} />
+                                                </label>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Media Caption (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={currentTemplate.mediaCaption || ''}
+                                            onChange={(e) => setCurrentTemplate({ ...currentTemplate, mediaCaption: e.target.value })}
+                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all"
+                                            placeholder="Add a caption for your image..."
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'video' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Video Source (Direct link or Upload)</label>
+
+                                        {/* Video Preview in Modal */}
+                                        {currentTemplate.videoUrl && (
+                                            <div className="mb-4 rounded-2xl overflow-hidden border-2 border-slate-100 aspect-video bg-slate-900 relative group/vid shadow-sm">
+                                                <video
+                                                    src={currentTemplate.videoUrl}
+                                                    className="w-full h-full object-contain"
+                                                    controls
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrentTemplate(prev => ({ ...prev, videoUrl: '' }))}
+                                                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover/vid:opacity-100 z-10"
+                                                >
+                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <input
+                                            type="text"
+                                            value={currentTemplate.videoUrl || ''}
+                                            onChange={(e) => setCurrentTemplate({ ...currentTemplate, videoUrl: e.target.value })}
+                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all shadow-sm"
+                                            placeholder="https://example.com/video.mp4"
+                                        />
+                                        <div className="flex items-center gap-3 mt-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Upload Local File</p>
+                                                <input
+                                                    type="file"
+                                                    accept="video/*"
+                                                    className="text-[10px] font-bold text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-slate-900 file:text-white hover:file:bg-slate-800 transition-all cursor-pointer"
+                                                    onChange={(e) => handleMediaUpload(e, 'video')}
+                                                    disabled={uploading}
+                                                />
+                                            </div>
+                                            {uploading && <i className="fa-solid fa-circle-notch fa-spin text-slate-400"></i>}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Media Caption (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={currentTemplate.mediaCaption || ''}
+                                            onChange={(e) => setCurrentTemplate({ ...currentTemplate, mediaCaption: e.target.value })}
+                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all"
+                                            placeholder="Add a caption for your video..."
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="pt-4">
                                 <button
@@ -338,8 +499,6 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                 </button>
                             </div>
                         </div>
-
-
 
                         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                             {deletedTemplates.length === 0 ? (

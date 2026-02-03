@@ -119,7 +119,7 @@ export const logoutSession = async (instanceId) => {
     return false;
 };
 
-export const sendMessage = async (instanceId, number, message, imageUrl = null) => {
+export const sendMessage = async (instanceId, number, content) => {
     const socket = sessions[instanceId];
     if (!socket || connectionStatus[instanceId] !== 'connected') {
         throw new Error('Session not connected');
@@ -132,12 +132,31 @@ export const sendMessage = async (instanceId, number, message, imageUrl = null) 
     const delay = Math.floor(Math.random() * 2000) + 1000;
     await new Promise(resolve => setTimeout(resolve, delay));
 
-    if (imageUrl) {
-        await socket.sendMessage(formattedNumber, {
-            image: { url: imageUrl },
-            caption: message
-        });
+    if (typeof content === 'string') {
+        await socket.sendMessage(formattedNumber, { text: content });
     } else {
-        await socket.sendMessage(formattedNumber, { text: message });
+        const { text, image, video, caption } = content;
+
+        if (image) {
+            const imageContent = image.startsWith('data:')
+                ? Buffer.from(image.split(',')[1], 'base64')
+                : { url: image };
+
+            await socket.sendMessage(formattedNumber, {
+                image: imageContent,
+                caption: caption || text
+            });
+        } else if (video) {
+            const videoContent = video.startsWith('data:')
+                ? Buffer.from(video.split(',')[1], 'base64')
+                : { url: video };
+
+            await socket.sendMessage(formattedNumber, {
+                video: videoContent,
+                caption: caption || text
+            });
+        } else {
+            await socket.sendMessage(formattedNumber, { text: text || '' });
+        }
     }
 };

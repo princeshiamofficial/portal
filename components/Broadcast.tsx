@@ -334,11 +334,40 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                     ) : (
                                         <>
                                             {selectedTemplate.imageUrl && (
-                                                <div className="mb-2 rounded-lg overflow-hidden border border-slate-100">
-                                                    <img src={selectedTemplate.imageUrl} alt="Template Attachment" className="w-full h-auto" />
+                                                <div className="mb-2.5 rounded-xl overflow-hidden border border-emerald-100/50 shadow-sm bg-white/50">
+                                                    <img
+                                                        src={selectedTemplate.imageUrl}
+                                                        className="w-full h-auto object-cover max-h-60"
+                                                        alt="Preview"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
                                                 </div>
                                             )}
-                                            <p className="text-sm text-slate-800 leading-relaxed font-sans">{formatPreview(selectedTemplate.content)}</p>
+                                            {selectedTemplate.videoUrl && (
+                                                <div className="mb-2.5 rounded-xl overflow-hidden border border-emerald-100/50 shadow-sm bg-slate-900 group/vid relative aspect-video flex items-center justify-center">
+                                                    <video
+                                                        src={selectedTemplate.videoUrl}
+                                                        className="w-full h-full object-contain"
+                                                        muted
+                                                    />
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/vid:bg-black/40 transition-all">
+                                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+                                                            <i className="fa-solid fa-play text-xs translate-x-0.5"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Show media caption or message content */}
+                                            {(selectedTemplate.imageUrl || selectedTemplate.videoUrl) ? (
+                                                selectedTemplate.mediaCaption ? (
+                                                    <p className="text-sm text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">{formatPreview(selectedTemplate.mediaCaption)}</p>
+                                                ) : selectedTemplate.content ? (
+                                                    <p className="text-sm text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">{formatPreview(selectedTemplate.content)}</p>
+                                                ) : null
+                                            ) : (
+                                                <p className="text-sm text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">{formatPreview(selectedTemplate.content)}</p>
+                                            )}
                                         </>
                                     )}
                                     <span className="text-[9px] text-slate-400 font-bold block mt-2 text-right">14:20</span>

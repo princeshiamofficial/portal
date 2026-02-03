@@ -53,7 +53,8 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
-app.use(bodyParser.json({ limit: '10mb' })); // Increased limit for logos
+app.use(bodyParser.json({ limit: '50mb' })); // Increased limit for media uploads
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Logo Upload Route Moved below middleware
@@ -91,17 +92,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// File Upload Route (General)
-app.post('/api/upload', authenticateToken, upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-    }
-    const protocol = req.protocol === 'http' && req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto'] : req.protocol;
-    const url = `${protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    res.json({ url });
-});
-
-// Logo Upload Route (Legacy/Specific)
+// Logo Upload Route
 app.post('/api/upload-logo', authenticateToken, upload.single('logo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
@@ -320,15 +311,10 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         // Fetch campaign settings for this user
         const settings = await db.get('SELECT * FROM campaign_settings WHERE userId = ?', [req.user.id]);
 
-        let filteredTemplates = templates;
-        if (req.user.role?.toLowerCase() === 'admin' || req.user.role?.toLowerCase() === 'superadmin') {
-            filteredTemplates = templates.filter(t => !t.title.includes('Birthday') && !t.title.includes('Anniversary'));
-        }
-
         res.json({
             customers,
-            storeUrl: req.user.storeUrl, // Note: req.user comes from token, might need a DB fetch if changed recently
-            templates: filteredTemplates.map(t => ({ ...t, deleted: !!t.deleted })),
+            storeUrl: req.user.storeUrl,
+            templates: templates.map(t => ({ ...t, deleted: !!t.deleted })),
             campaignSettings: settings ? {
                 ...settings,
                 birthdayActive: !!settings.birthdayActive,
@@ -348,6 +334,13 @@ app.post('/api/data', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const body = req.body;
 
+        console.log(`[API] /api/data POST from userId: ${userId} (role: ${req.user.role})`);
+
+        if (!userId) {
+            console.error('[API] Error: userId is missing from token!');
+            return res.status(401).json({ message: 'Invalid token payload' });
+        }
+
         if (body.customers) {
             // Simple sync: replace all customers for this user (could be optimized)
             await db.run('DELETE FROM customers WHERE userId = ?', [userId]);
@@ -364,12 +357,29 @@ app.post('/api/data', authenticateToken, async (req, res) => {
         }
 
         if (body.templates) {
-            await db.run('DELETE FROM templates WHERE userId = ?', [userId]);
-            for (const t of body.templates) {
-                await db.run(
-                    'INSERT INTO templates (userId, title, content, imageUrl, type, deleted) VALUES (?, ?, ?, ?, ?, ?)',
-                    [userId, t.title, t.content, t.imageUrl || null, t.type, t.deleted ? 1 : 0]
-                );
+            console.log(`[API] Saving ${body.templates.length} templates for user ${userId}`);
+            const connection = await db.pool.getConnection();
+            try {
+                await connection.beginTransaction();
+                await connection.execute('DELETE FROM templates WHERE userId = ?', [userId]);
+                for (const t of body.templates) {
+                    if (!t.title) {
+                        console.warn(`[API] Skipping template without title for user ${userId}`);
+                        continue;
+                    }
+                    await connection.execute(
+                        'INSERT INTO templates (userId, title, content, type, deleted, imageUrl, videoUrl, mediaCaption) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                        [userId, t.title, t.content || '', t.type || 'Personal', t.deleted ? 1 : 0, t.imageUrl || null, t.videoUrl || null, t.mediaCaption || null]
+                    );
+                }
+                await connection.commit();
+                console.log(`[API] Successfully saved templates for user ${userId}`);
+            } catch (err) {
+                await connection.rollback();
+                console.error(`[API] Failed to save templates for user ${userId}:`, err);
+                throw err;
+            } finally {
+                connection.release();
             }
         }
 
@@ -402,8 +412,11 @@ app.post('/api/data', authenticateToken, async (req, res) => {
 
         res.json({ message: 'Data saved successfully' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error saving data' });
+        console.error("Error saving data:", error);
+        if (error.code === 'ER_NET_PACKET_TOO_LARGE') {
+            return res.status(413).json({ message: 'Data too large. Please reduce image sizes.' });
+        }
+        res.status(500).json({ message: 'Error saving data: ' + error.message });
     }
 });
 
@@ -672,13 +685,19 @@ app.get('/api/me', authenticateToken, async (req, res) => {
 
 app.post('/api/whatsapp/send', authenticateToken, async (req, res) => {
     try {
-        const { phone, message, imageUrl } = req.body;
+        const { phone, message, image, video, caption } = req.body;
         const instanceId = req.user.instanceId;
         if (!instanceId) return res.status(400).json({ message: 'No instance ID found for user' });
 
-        if (!phone || !message) return res.status(400).json({ message: 'Phone and message required' });
+        if (!phone) return res.status(400).json({ message: 'Phone number required' });
+        if (!message && !image && !video) return res.status(400).json({ message: 'Message, image, or video required' });
 
-        await sendMessage(instanceId, phone, message, imageUrl);
+        await sendMessage(instanceId, phone, {
+            text: message,
+            image,
+            video,
+            caption
+        });
         res.json({ message: 'Message queued' });
     } catch (error) {
         console.error(error);
@@ -787,7 +806,12 @@ const startCampaignScheduler = () => {
                         if (birthdayTemplate && customer.dob && customer.dob.toLowerCase().includes(todayStr.toLowerCase())) {
                             console.log(`[Scheduler] Sending Birthday to ${customer.name} (${user.storeName})`);
                             const personalizedContent = birthdayTemplate.content.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business');
-                            await sendMessage(instanceId, customer.whatsapp, personalizedContent);
+                            await sendMessage(instanceId, customer.whatsapp, {
+                                text: personalizedContent,
+                                image: birthdayTemplate.imageUrl,
+                                video: birthdayTemplate.videoUrl,
+                                caption: birthdayTemplate.mediaCaption?.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business')
+                            });
                             await db.run(
                                 'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
                                 [userId, 'System', customer.whatsapp, personalizedContent]
@@ -797,7 +821,12 @@ const startCampaignScheduler = () => {
                         if (anniversaryTemplate && customer.anniversaryDate && customer.anniversaryDate.toLowerCase().includes(todayStr.toLowerCase())) {
                             console.log(`[Scheduler] Sending Anniversary to ${customer.name} (${user.storeName})`);
                             const personalizedContent = anniversaryTemplate.content.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business');
-                            await sendMessage(instanceId, customer.whatsapp, personalizedContent);
+                            await sendMessage(instanceId, customer.whatsapp, {
+                                text: personalizedContent,
+                                image: anniversaryTemplate.imageUrl,
+                                video: anniversaryTemplate.videoUrl,
+                                caption: anniversaryTemplate.mediaCaption?.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business')
+                            });
                             await db.run(
                                 'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
                                 [userId, 'System', customer.whatsapp, personalizedContent]
@@ -812,97 +841,112 @@ const startCampaignScheduler = () => {
 
                 // 2. Scheduled Campaigns
                 const updatedCampaigns = [...settings.scheduledCampaigns];
-                let scheduledUpdated = false;
 
                 for (let i = 0; i < updatedCampaigns.length; i++) {
-                    const campaign = updatedCampaigns[i];
+                    const campaign = updatedCampaigns[i]; // Copy of original state
                     if (campaign.status === 'Pending' && campaign.scheduledTime <= nowISOFull) {
                         const template = templates.find(t => t.id === campaign.templateId);
                         if (template) {
                             console.log(`[Scheduler] ========================================`);
-                            console.log(`[Scheduler] Running Scheduled Campaign: ${template.title} for ${user.storeName}`);
-                            console.log(`[Scheduler] Campaign ID: ${campaign.id}, Target Role: ${campaign.targetRole || 'None (Regular Campaign)'}`);
-                            console.log(`[Scheduler] Instance ID: ${instanceId}`);
+                            console.log(`[Scheduler] 🚀 Starting Campaign: ${template.title}`);
+                            console.log(`[Scheduler] Campaign ID: ${campaign.id}`);
+
+                            // CRITICAL FIX: Mark as Processing immediately and SAVE to prevent duplicates
+                            updatedCampaigns[i] = { ...campaign, status: 'Processing' };
+                            await db.run(
+                                `UPDATE campaign_settings SET scheduledCampaigns = ? WHERE userId = ?`,
+                                [JSON.stringify(updatedCampaigns), userId]
+                            );
+                            console.log(`[Scheduler] Status updated to 'Processing' in DB`);
+
+                            let messagesSent = 0;
 
                             // Check if this is an admin campaign with targetRole
                             const isAdminCampaign = (user.role === 'admin' || user.role === 'superadmin') && campaign.targetRole;
 
                             if (isAdminCampaign) {
                                 // Admin campaign: send to system users filtered by designation
-                                console.log(`[Scheduler] This is an ADMIN campaign targeting: ${campaign.targetRole}`);
+                                console.log(`[Scheduler] ADMIN campaign targeting: ${campaign.targetRole}`);
                                 const allUsers = await db.all('SELECT id, name, storeName, whatsapp, designation FROM users WHERE whatsapp IS NOT NULL AND whatsapp != ""');
-                                console.log(`[Scheduler] Total users in database: ${allUsers.length}`);
 
                                 const targetUsers = campaign.targetRole === 'All'
                                     ? allUsers
                                     : allUsers.filter(u => u.designation === campaign.targetRole);
 
-                                console.log(`[Scheduler] Admin campaign targeting ${campaign.targetRole}: ${targetUsers.length} users`);
-                                console.log(`[Scheduler] Target users:`, targetUsers.map(u => ({ name: u.name, designation: u.designation, whatsapp: u.whatsapp })));
-
-                                if (targetUsers.length === 0) {
-                                    console.log(`[Scheduler] ⚠️ WARNING: No users found with designation "${campaign.targetRole}"`);
-                                }
+                                console.log(`[Scheduler] Targeting ${targetUsers.length} users`);
 
                                 for (const targetUser of targetUsers) {
                                     try {
-                                        console.log(`[Scheduler] Attempting to send to: ${targetUser.name} (${targetUser.whatsapp})`);
                                         const personalizedContent = template.content.replace('[name]', targetUser.name || 'User').replace('[business]', targetUser.storeName || 'our business');
-                                        await sendMessage(instanceId, targetUser.whatsapp, personalizedContent, template.imageUrl);
+                                        await sendMessage(instanceId, targetUser.whatsapp, {
+                                            text: personalizedContent,
+                                            image: template.imageUrl,
+                                            video: template.videoUrl,
+                                            caption: template.mediaCaption?.replace('[name]', targetUser.name || 'User').replace('[business]', targetUser.storeName || 'our business')
+                                        });
                                         await db.run(
                                             'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
                                             [userId, 'Campaign', targetUser.whatsapp, personalizedContent]
                                         );
                                         messagesSent++;
-                                        console.log(`[Scheduler] ✅ Message sent successfully to ${targetUser.name}`);
                                     } catch (e) {
-                                        console.error(`[Scheduler] ❌ Failed to send to user ${targetUser.name}:`, e.message);
+                                        console.error(`[Scheduler] ❌ Failed to send to ${targetUser.name}:`, e.message);
                                     }
                                 }
                             } else {
                                 // Regular campaign: send to customers
-                                console.log(`[Scheduler] This is a REGULAR campaign (sending to customers)`);
-                                console.log(`[Scheduler] Total customers: ${customers.length}`);
+                                console.log(`[Scheduler] REGULAR campaign targeting ${customers.length} customers`);
 
                                 for (const customer of customers) {
                                     try {
-                                        console.log(`[Scheduler] Attempting to send to customer: ${customer.name} (${customer.whatsapp})`);
                                         const personalizedContent = template.content.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business');
-                                        await sendMessage(instanceId, customer.whatsapp, personalizedContent, template.imageUrl);
+                                        await sendMessage(instanceId, customer.whatsapp, {
+                                            text: personalizedContent,
+                                            image: template.imageUrl,
+                                            video: template.videoUrl,
+                                            caption: template.mediaCaption?.replace('[name]', customer.name).replace('[business]', user.storeName || 'our business')
+                                        });
                                         await db.run(
                                             'INSERT INTO message_logs (userId, type, recipient, content) VALUES (?, ?, ?, ?)',
                                             [userId, 'Campaign', customer.whatsapp, personalizedContent]
                                         );
                                         messagesSent++;
-                                        console.log(`[Scheduler] ✅ Message sent successfully to ${customer.name}`);
                                     } catch (e) {
                                         console.error(`[Scheduler] ❌ Failed to send to ${customer.name}:`, e.message);
                                     }
                                 }
                             }
 
+                            // Mark as Completed and SAVE again
+                            console.log(`[Scheduler] Campaign finished. Sent: ${messagesSent}. Updating status to Completed...`);
                             updatedCampaigns[i] = { ...campaign, status: 'Completed' };
-                            scheduledUpdated = true;
-                            console.log(`[Scheduler] Campaign marked as Completed. Total messages sent: ${messagesSent}`);
+                            await db.run(
+                                `UPDATE campaign_settings SET scheduledCampaigns = ? WHERE userId = ?`,
+                                [JSON.stringify(updatedCampaigns), userId]
+                            );
                             console.log(`[Scheduler] ========================================`);
                         }
                     }
                 }
 
-                if (scheduledUpdated) {
-                    settings.scheduledCampaigns = updatedCampaigns;
-                    updatesNeeded = true;
-                }
+                // Save Updates for Daily Checks (if any)
+                // If scheduledCampaigns were updated, we already saved them above.
+                // But if updatesNeeded is true (from daily checks), we need to save lastRunDate.
+                // If we also updated scheduledCampaigns, we should use the latest array.
+                // However, since we saved scheduledCampaigns in the loop, 'settings.scheduledCampaigns' inside the top-level object
+                // still holds the OLD array unless we mutated it or update it here.
+                // Simpler: Just save lastRunDate if needed, and re-read or use the latest campaigns if saving again.
+                // Actually, if 'updatesNeeded' is true (from birthday check), we must save 'lastRunDate'.
+                // We must be careful not to overwrite the 'scheduledCampaigns' changes we just made if we blindly save 'settings.scheduledCampaigns'.
 
-                // Save Updates
                 if (updatesNeeded) {
                     await db.run(
                         `UPDATE campaign_settings 
-                         SET lastRunDate = ?, scheduledCampaigns = ? 
+                         SET lastRunDate = ?
                          WHERE userId = ?`,
-                        [settings.lastRunDate, JSON.stringify(settings.scheduledCampaigns), userId]
+                        [settings.lastRunDate, userId]
                     );
-                    console.log(`[Scheduler] Updated settings for ${user.storeName}. Messages sent: ${messagesSent}`);
+                    console.log(`[Scheduler] Updated lastRunDate for ${user.storeName}`);
                 }
 
             } catch (err) {
