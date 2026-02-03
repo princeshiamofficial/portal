@@ -43,7 +43,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
         }
     };
 
-    const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+    const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -55,21 +55,34 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
         }
 
         setUploading(true);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64 = reader.result as string;
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+
+            const data = await response.json();
+
             if (type === 'image') {
-                setCurrentTemplate(prev => ({ ...prev, imageUrl: base64, videoUrl: '' }));
+                setCurrentTemplate(prev => ({ ...prev, imageUrl: data.url, videoUrl: '' }));
             } else {
-                setCurrentTemplate(prev => ({ ...prev, videoUrl: base64, imageUrl: '' }));
+                setCurrentTemplate(prev => ({ ...prev, videoUrl: data.url, imageUrl: '' }));
             }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload file. Please try again.');
+        } finally {
             setUploading(false);
-        };
-        reader.onerror = () => {
-            alert('Failed to read file. Please try again.');
-            setUploading(false);
-        };
-        reader.readAsDataURL(file);
+        }
     };
 
     const activeTemplates = templates.filter(t => !t.deleted);

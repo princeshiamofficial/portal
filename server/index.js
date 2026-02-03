@@ -31,12 +31,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 30 * 1024 * 1024 }, // 30MB limit for videos
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
             cb(null, true);
         } else {
-            cb(new Error('Only images are allowed'));
+            cb(new Error('Only images and videos are allowed'));
         }
     }
 });
@@ -92,7 +92,17 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Logo Upload Route
+// Generic Media Upload Route (Replaces Base64)
+app.post('/api/upload', authenticateToken, upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const protocol = req.protocol === 'http' && req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto'] : req.protocol;
+    const url = `${protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ url });
+});
+
+// Logo Upload Route (Legacy support)
 app.post('/api/upload-logo', authenticateToken, upload.single('logo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
