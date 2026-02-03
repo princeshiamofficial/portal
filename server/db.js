@@ -124,9 +124,16 @@ export async function initDb() {
     `);
 
     try { await db.exec(`ALTER TABLE templates ADD COLUMN deleted TINYINT DEFAULT 0`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates MODIFY COLUMN deleted TINYINT DEFAULT 0`); } catch (e) { }
+
     try { await db.exec(`ALTER TABLE templates ADD COLUMN imageUrl LONGTEXT`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates MODIFY COLUMN imageUrl LONGTEXT`); } catch (e) { }
+
     try { await db.exec(`ALTER TABLE templates ADD COLUMN videoUrl LONGTEXT`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates MODIFY COLUMN videoUrl LONGTEXT`); } catch (e) { }
+
     try { await db.exec(`ALTER TABLE templates ADD COLUMN mediaCaption TEXT`); } catch (e) { }
+    try { await db.exec(`ALTER TABLE templates MODIFY COLUMN mediaCaption TEXT`); } catch (e) { }
 
     // Campaign Settings table
     await db.exec(`
