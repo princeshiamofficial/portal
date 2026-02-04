@@ -47,41 +47,40 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validation for file size
-        const maxSize = 30 * 1024 * 1024; // 30MB
-        if (file.size > maxSize) {
-            alert(`File is too large. Maximum size is 30MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`);
-            return;
-        }
-
-        setUploading(true);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            if (!response.ok) throw new Error('Upload failed');
-
-            const data = await response.json();
-
-            if (type === 'image') {
-                setCurrentTemplate(prev => ({ ...prev, imageUrl: data.url, videoUrl: '' }));
-            } else {
-                setCurrentTemplate(prev => ({ ...prev, videoUrl: data.url, imageUrl: '' }));
+        // Validation for file size (allowed for images)
+        if (type === 'image') {
+            const maxSize = 10 * 1024 * 1024; // 10MB for images
+            if (file.size > maxSize) {
+                alert(`Image is too large. Maximum size is 10MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`);
+                return;
             }
-        } catch (error) {
-            console.error('Upload error:', error);
-            alert('Failed to upload file. Please try again.');
-        } finally {
-            setUploading(false);
+
+            setUploading(true);
+            const token = localStorage.getItem('fm_token');
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const res = await fetch('/api/templates/upload-image', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    setCurrentTemplate(prev => ({ ...prev, imageUrl: data.imageUrl, videoUrl: '' }));
+                } else {
+                    alert('Failed to upload image. Please try again.');
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                alert('An error occurred during upload.');
+            } finally {
+                setUploading(false);
+            }
         }
     };
 
@@ -120,7 +119,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
         }
 
         if (activeTab === 'video' && !currentTemplate.videoUrl?.trim()) {
-            alert('Please provide a video URL or upload a video.');
+            alert('Please provide a video URL.');
             return;
         }
 
@@ -387,7 +386,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                             {activeTab === 'video' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Video Source (Direct link or Upload)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Video Source URL</label>
 
                                         {/* Video Preview in Modal */}
                                         {currentTemplate.videoUrl && (
@@ -414,19 +413,7 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                             className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all shadow-sm"
                                             placeholder="https://example.com/video.mp4"
                                         />
-                                        <div className="flex items-center gap-3 mt-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                            <div className="flex-1">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Upload Local File</p>
-                                                <input
-                                                    type="file"
-                                                    accept="video/*"
-                                                    className="text-[10px] font-bold text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-slate-900 file:text-white hover:file:bg-slate-800 transition-all cursor-pointer"
-                                                    onChange={(e) => handleMediaUpload(e, 'video')}
-                                                    disabled={uploading}
-                                                />
-                                            </div>
-                                            {uploading && <i className="fa-solid fa-circle-notch fa-spin text-slate-400"></i>}
-                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-2 ml-1">Note: Only direct video links are supported. Paste the URL above.</p>
                                     </div>
 
                                     <div>
