@@ -24,7 +24,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
   // Reset scroll to top on view change
   useEffect(() => {
     if (mainRef.current) {
-      mainRef.current.scrollTo(0, 0);
+      // Small timeout to ensure DOM update is complete
+      setTimeout(() => {
+        if (mainRef.current) mainRef.current.scrollTop = 0;
+      }, 0);
     }
   }, [activeView]);
 
