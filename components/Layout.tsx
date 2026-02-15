@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { View, User } from '../types.ts';
 import Sidebar from './Sidebar';
 
@@ -12,6 +12,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, onLogout }) => {
+  const { pathname } = useLocation();
   const [showDisabledModal, setShowDisabledModal] = useState(user.status === 'disabled');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -21,15 +22,28 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
 
   const mainRef = useRef<HTMLElement>(null);
 
-  // Reset scroll to top on view change
+  // Ultra-forceful scroll reset on route change
   useEffect(() => {
-    if (mainRef.current) {
-      // Small timeout to ensure DOM update is complete
-      setTimeout(() => {
-        if (mainRef.current) mainRef.current.scrollTop = 0;
-      }, 0);
-    }
-  }, [activeView]);
+    const reset = () => {
+      if (mainRef.current) {
+        mainRef.current.scrollTop = 0;
+        mainRef.current.scrollTo({ top: 0, behavior: 'instant' });
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    };
+
+    // Immediate
+    reset();
+
+    // After a few frames to handle React's rendering cycle
+    const timeoutIds = [
+      setTimeout(reset, 0),
+      setTimeout(reset, 50),
+      setTimeout(reset, 150),
+    ];
+
+    return () => timeoutIds.forEach(id => clearTimeout(id));
+  }, [pathname, activeView]);
 
   const toggleSidebarCollapse = () => {
     setIsSidebarCollapsed((prev: boolean) => {
