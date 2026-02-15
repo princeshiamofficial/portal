@@ -113,47 +113,24 @@ const Broadcast: React.FC<BroadcastProps> = ({
                 </div>
             </header>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                        <i className="fa-solid fa-users"></i>
+            {/* Stats Grid - Modern Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+                {[
+                    { label: 'Recipients', value: contacts.length.toLocaleString(), icon: 'fa-users', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                    { label: 'Daily Limit', value: '5,000', icon: 'fa-chart-pie', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+                    { label: 'Safety Buffer', value: '3-7s', icon: 'fa-shield-halved', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { label: 'Success Rate', value: successRate, icon: 'fa-bullseye', color: 'text-purple-500', bg: 'bg-purple-500/10' }
+                ].map((stat, i) => (
+                    <div key={i} className="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-slate-50 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-3 md:gap-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
+                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-full ${stat.bg} ${stat.color} flex items-center justify-center text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300 shadow-inner`}>
+                            <i className={`fa-solid ${stat.icon}`}></i>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-slate-400 text-[10px] md:text-sm font-black uppercase tracking-widest mb-0.5 md:mb-1">{stat.label}</p>
+                            <h3 className="text-lg md:text-2xl font-black text-slate-800 tracking-tight">{stat.value}</h3>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-slate-500 text-sm font-bold mb-1">Total Recipients</p>
-                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">{contacts.length.toLocaleString()}</h3>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                        <i className="fa-solid fa-chart-pie"></i>
-                    </div>
-                    <div>
-                        <p className="text-slate-500 text-sm font-bold mb-1">Daily Limit</p>
-                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">5,000</h3>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                        <i className="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div>
-                        <p className="text-slate-500 text-sm font-bold mb-1">Safety Buffer</p>
-                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">3-7s</h3>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="w-14 h-14 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                        <i className="fa-solid fa-bullseye"></i>
-                    </div>
-                    <div>
-                        <p className="text-slate-500 text-sm font-bold mb-1">Success Rate</p>
-                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">{successRate}</h3>
-                    </div>
-                </div>
+                ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

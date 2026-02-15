@@ -166,13 +166,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                     { label: 'Msgs Sent', value: stats.messagesSent, sub: 'All Time', icon: 'fa-paper-plane', color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-100' },
                     { label: 'Engagement', value: 'N/A', sub: 'Coming Soon', icon: 'fa-chart-line', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-100' }
                 ]).map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                        <div className={`w-14 h-14 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300`}>
+                    <div key={i} className="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-slate-50 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-3 md:gap-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
+                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-full ${stat.bg} ${stat.color} flex items-center justify-center text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300 shadow-inner`}>
                             <i className={`fa-solid ${stat.icon}`}></i>
                         </div>
-                        <div>
-                            <p className="text-slate-500 text-sm font-bold mb-1">{stat.label}</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stat.value}</h3>
+                        <div className="flex-1">
+                            <p className="text-slate-400 text-[10px] md:text-sm font-black uppercase tracking-widest mb-0.5 md:mb-1">{stat.label}</p>
+                            <h3 className="text-lg md:text-2xl font-black text-slate-800 tracking-tight">{stat.value}</h3>
                         </div>
                     </div>
                 ))}
