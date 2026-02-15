@@ -129,125 +129,125 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
             </div>
 
             {/* Campaign Configuration Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-4">
                 {/* Birthday Campaign */}
                 {!isAdmin && (
-                    <div className={`relative p-8 rounded-[3rem] border transition-all duration-500 ${settings.birthdayActive ? 'bg-white border-rose-100 shadow-xl shadow-rose-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'}`}>
+                    <div className={`relative p-6 md:p-8 rounded-[2rem] border transition-all duration-500 ${settings.birthdayActive ? 'bg-white border-rose-50 shadow-xl shadow-rose-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'} hover:shadow-2xl`}>
                         <div className="flex justify-between items-start mb-8">
-                            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl ${settings.birthdayActive ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' : 'bg-slate-200 text-slate-400'}`}>
+                            <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-xl md:text-2xl ${settings.birthdayActive ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' : 'bg-slate-200 text-slate-400'}`}>
                                 <i className="fa-solid fa-cake-candles"></i>
                             </div>
 
                             {/* Toggle Switch */}
                             <div className="flex items-center gap-3">
-                                <span className={`text-[10px] font-black uppercase tracking-widest ${settings.birthdayActive ? 'text-rose-500' : 'text-slate-400'}`}>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${settings.birthdayActive ? 'text-rose-500' : 'text-slate-400'}`}>
                                     {settings.birthdayActive ? 'Active' : 'Inactive'}
                                 </span>
                                 <button
                                     onClick={() => toggleCampaign('birthday')}
-                                    className={`w-14 h-7 rounded-full transition-all relative p-1 ${settings.birthdayActive ? 'bg-rose-500' : 'bg-slate-300'}`}
+                                    className={`w-12 h-6 md:w-14 md:h-7 rounded-full transition-all relative p-1 ${settings.birthdayActive ? 'bg-rose-500' : 'bg-slate-300'}`}
                                 >
-                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${settings.birthdayActive ? 'translate-x-7' : 'translate-x-0'}`}></div>
+                                    <div className={`w-4 h-4 md:w-5 md:h-5 bg-white rounded-full shadow-md transition-all ${settings.birthdayActive ? 'translate-x-6 md:translate-x-7' : 'translate-x-0'}`}></div>
                                 </button>
                             </div>
                         </div>
 
-                        <h3 className="text-2xl font-black text-slate-800 mb-2">Birthday Campaign</h3>
-                        <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Send a warm greeting and special offer to customers on their special day.</p>
+                        <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">Birthday Campaign</h3>
+                        <p className="text-slate-500 text-xs md:text-sm font-medium mb-8 leading-relaxed">Send a warm greeting and special offer to customers on their special day.</p>
 
-                        <div className="space-y-4 mb-8">
-                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                        <div className="space-y-3 md:space-y-4 mb-8">
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.25rem] border border-slate-100/50">
                                 <div className="flex items-center gap-3">
-                                    <i className="fa-solid fa-message text-slate-400"></i>
-                                    <span className="text-sm font-bold text-slate-600">Template</span>
+                                    <i className="fa-solid fa-message text-slate-400 text-[10px]"></i>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Template</span>
                                 </div>
-                                <span className={`text-sm font-black ${settings.birthdayTemplateId ? 'text-rose-500' : 'text-slate-400'}`}>
+                                <span className={`text-xs font-black ${settings.birthdayTemplateId ? 'text-rose-500' : 'text-slate-400'}`}>
                                     {getTemplateTitle(settings.birthdayTemplateId)}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.25rem] border border-slate-100/50">
                                 <div className="flex items-center gap-3">
-                                    <i className="fa-solid fa-users text-slate-400"></i>
-                                    <span className="text-sm font-bold text-slate-600">Today's Celebrants</span>
+                                    <i className="fa-solid fa-users text-slate-400 text-[10px]"></i>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Today's Celebrants</span>
                                 </div>
-                                <span className="text-sm font-black text-slate-800">{birthdayCelebrants.length} Customers</span>
+                                <span className="text-xs font-black text-slate-800">{birthdayCelebrants.length} Customers</span>
                             </div>
                         </div>
 
                         <button
                             onClick={() => setShowSelector('birthday')}
-                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${settings.birthdayActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
+                            className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 ${settings.birthdayActive ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
                             disabled={!settings.birthdayActive && !!settings.birthdayTemplateId}
                         >
-                            <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            <i className="fa-solid fa-pen-to-square"></i>
                             <span>{settings.birthdayTemplateId ? 'Change Template' : 'Select Template'}</span>
                         </button>
                         {!settings.birthdayTemplateId && settings.birthdayActive && (
-                            <p className="text-[10px] text-rose-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
+                            <p className="text-[10px] text-rose-500 font-bold mt-4 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
                         )}
                     </div>
                 )}
 
                 {/* Anniversary Campaign */}
                 {!isAdmin && (
-                    <div className={`relative p-8 rounded-[3rem] border transition-all duration-500 ${settings.anniversaryActive ? 'bg-white border-purple-100 shadow-xl shadow-purple-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'}`}>
+                    <div className={`relative p-6 md:p-8 rounded-[2rem] border transition-all duration-500 ${settings.anniversaryActive ? 'bg-white border-purple-50 shadow-xl shadow-purple-500/5' : 'bg-slate-50 border-slate-200 opacity-80 shadow-none'} hover:shadow-2xl`}>
                         <div className="flex justify-between items-start mb-8">
-                            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl ${settings.anniversaryActive ? 'bg-purple-500 text-white shadow-lg shadow-purple-200' : 'bg-slate-200 text-slate-400'}`}>
+                            <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-xl md:text-2xl ${settings.anniversaryActive ? 'bg-purple-500 text-white shadow-lg shadow-purple-200' : 'bg-slate-200 text-slate-400'}`}>
                                 <i className="fa-solid fa-heart"></i>
                             </div>
 
                             {/* Toggle Switch */}
                             <div className="flex items-center gap-3">
-                                <span className={`text-[10px] font-black uppercase tracking-widest ${settings.anniversaryActive ? 'text-purple-500' : 'text-slate-400'}`}>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${settings.anniversaryActive ? 'text-purple-500' : 'text-slate-400'}`}>
                                     {settings.anniversaryActive ? 'Active' : 'Inactive'}
                                 </span>
                                 <button
                                     onClick={() => toggleCampaign('anniversary')}
-                                    className={`w-14 h-7 rounded-full transition-all relative p-1 ${settings.anniversaryActive ? 'bg-purple-500' : 'bg-slate-300'}`}
+                                    className={`w-12 h-6 md:w-14 md:h-7 rounded-full transition-all relative p-1 ${settings.anniversaryActive ? 'bg-purple-500' : 'bg-slate-300'}`}
                                 >
-                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${settings.anniversaryActive ? 'translate-x-7' : 'translate-x-0'}`}></div>
+                                    <div className={`w-4 h-4 md:w-5 md:h-5 bg-white rounded-full shadow-md transition-all ${settings.anniversaryActive ? 'translate-x-6 md:translate-x-7' : 'translate-x-0'}`}></div>
                                 </button>
                             </div>
                         </div>
 
-                        <h3 className="text-2xl font-black text-slate-800 mb-2">Anniversary Campaign</h3>
-                        <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">Celebrate customer milestones with a heartfelt message and reward.</p>
+                        <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">Anniversary Campaign</h3>
+                        <p className="text-slate-500 text-xs md:text-sm font-medium mb-8 leading-relaxed">Celebrate customer milestones with a heartfelt message and reward.</p>
 
-                        <div className="space-y-4 mb-8">
-                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                        <div className="space-y-3 md:space-y-4 mb-8">
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.25rem] border border-slate-100/50">
                                 <div className="flex items-center gap-3">
-                                    <i className="fa-solid fa-message text-slate-400"></i>
-                                    <span className="text-sm font-bold text-slate-600">Template</span>
+                                    <i className="fa-solid fa-message text-slate-400 text-[10px]"></i>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Template</span>
                                 </div>
-                                <span className={`text-sm font-black ${settings.anniversaryTemplateId ? 'text-purple-500' : 'text-slate-400'}`}>
+                                <span className={`text-xs font-black ${settings.anniversaryTemplateId ? 'text-purple-500' : 'text-slate-400'}`}>
                                     {getTemplateTitle(settings.anniversaryTemplateId)}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100">
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.25rem] border border-slate-100/50">
                                 <div className="flex items-center gap-3">
-                                    <i className="fa-solid fa-users text-slate-400"></i>
-                                    <span className="text-sm font-bold text-slate-600">Today's Celebrants</span>
+                                    <i className="fa-solid fa-users text-slate-400 text-[10px]"></i>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Today's Celebrants</span>
                                 </div>
-                                <span className="text-sm font-black text-slate-800">{anniversaryCelebrants.length} Customers</span>
+                                <span className="text-xs font-black text-slate-800">{anniversaryCelebrants.length} Customers</span>
                             </div>
                         </div>
 
                         <button
                             onClick={() => setShowSelector('anniversary')}
-                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${settings.anniversaryActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
+                            className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 ${settings.anniversaryActive ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200' : 'bg-slate-200 text-slate-500 cursor-not-allowed opacity-50'}`}
                             disabled={!settings.anniversaryActive && !!settings.anniversaryTemplateId}
                         >
-                            <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            <i className="fa-solid fa-pen-to-square"></i>
                             <span>{settings.anniversaryTemplateId ? 'Change Template' : 'Select Template'}</span>
                         </button>
                         {!settings.anniversaryTemplateId && settings.anniversaryActive && (
-                            <p className="text-[10px] text-purple-500 font-bold mt-3 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
+                            <p className="text-[10px] text-purple-500 font-bold mt-4 text-center animate-pulse">⚠️ Please select a template to start auto-run</p>
                         )}
                     </div>
                 )}
 
                 {/* Scheduled Campaigns Card */}
-                <div className="relative p-8 rounded-[3rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/50 md:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                <div className="relative p-6 md:p-8 rounded-[2rem] border border-slate-100 bg-white shadow-xl shadow-slate-200/50 md:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                     <div className="flex justify-between items-start mb-8">
                         <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl bg-blue-500 text-white shadow-lg shadow-blue-200">
                             <i className="fa-solid fa-calendar-check"></i>

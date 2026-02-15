@@ -30,7 +30,7 @@ const Devices: React.FC<DevicesProps> = ({ wa, onConnect, onLogout }) => {
 
     return (
         <div className="flex-1">
-            <header className="z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-6 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 py-6 md:py-8 lg:py-12 flex flex-col md:flex-row md:items-end justify-end gap-6">
+            <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-center justify-end gap-6">
                 <div className="hidden">
                     <div className="flex items-center gap-2 text-red-500 mb-2">
                         <span className="h-1 w-8 bg-red-500 rounded-full"></span>
@@ -43,21 +43,21 @@ const Devices: React.FC<DevicesProps> = ({ wa, onConnect, onLogout }) => {
                 {wa.status !== 'connected' && (
                     <button
                         onClick={handleStartConnect}
-                        className="px-6 py-3 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all flex items-center justify-center gap-2 text-sm"
+                        className="px-6 py-3.5 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all flex items-center justify-center gap-2 text-sm"
                     >
                         <i className="fa-solid fa-plus"></i> Connect Account
                     </button>
                 )}
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
                 {wa.status === 'connected' ? (
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all group relative overflow-hidden animate-in fade-in duration-500">
+                    <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-50 shadow-sm transition-all group relative overflow-hidden animate-in fade-in duration-500 hover:shadow-xl">
                         <div className="flex items-center justify-between mb-8">
-                            <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
-                                <i className="fa-brands fa-whatsapp text-2xl"></i>
+                            <div className="w-12 h-12 md:w-14 md:h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center shadow-inner">
+                                <i className="fa-brands fa-whatsapp text-xl md:text-2xl"></i>
                             </div>
-                            <span className="px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">Active</span>
+                            <span className="px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100">Active</span>
                         </div>
                         <div className="space-y-1 mb-6">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Linked Account</p>
@@ -74,26 +74,26 @@ const Devices: React.FC<DevicesProps> = ({ wa, onConnect, onLogout }) => {
 
                         <div className="space-y-4 pt-6 border-t border-slate-50">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-slate-400 font-bold uppercase tracking-tighter">Status</span>
+                                <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Status</span>
                                 <span className="text-xs font-bold text-emerald-500">Connected</span>
                             </div>
                             <button
                                 onClick={() => setShowLogoutModal(true)}
-                                className="w-full py-3 bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-500 rounded-xl text-xs font-bold transition-all mt-2"
+                                className="w-full py-3.5 bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-500 rounded-2xl text-xs font-black uppercase tracking-widest transition-all mt-2"
                             >
-                                Logout Instance
+                                Disconnect Instance
                             </button>
                         </div>
                     </div>
                 ) : (
                     <div
                         onClick={handleStartConnect}
-                        className="border-2 border-dashed border-slate-200 rounded-[2.5rem] p-8 flex flex-col items-center justify-center group cursor-pointer hover:border-red-200 hover:bg-red-50/10 transition-all h-[300px]"
+                        className="bg-white border-2 border-dashed border-slate-100 rounded-[2rem] p-8 flex flex-col items-center justify-center group cursor-pointer hover:border-red-200 hover:bg-red-50/10 transition-all h-[280px]"
                     >
-                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-red-50 group-hover:text-red-500 transition-all mb-4">
+                        <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-red-50 group-hover:text-red-500 transition-all mb-4 shadow-inner">
                             <i className="fa-brands fa-whatsapp text-2xl"></i>
                         </div>
-                        <p className="font-bold text-slate-400 group-hover:text-red-500 transition-all text-center leading-relaxed">
+                        <p className="font-bold text-slate-400 group-hover:text-red-500 transition-all text-center leading-relaxed text-sm">
                             No active connection.<br />Link your WhatsApp now.
                         </p>
                     </div>
