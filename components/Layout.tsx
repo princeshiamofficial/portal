@@ -73,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
         </header>
 
         {/* Main Content Area - With Entry Animations */}
-        <main className={`flex-1 overflow-y-auto relative ${activeView === View.SETTINGS ? 'px-0' : 'px-4'} pt-28 pb-6 md:p-8 lg:p-12 lg:pt-12 custom-scrollbar lg:pb-12`}>
+        <main className={`flex-1 overflow-y-auto relative ${activeView === View.SETTINGS ? 'px-0' : 'px-4'} ${[View.DASHBOARD, View.DEVICES, View.SPECIAL_CAMPAIGN, View.SETTINGS].includes(activeView) ? 'pt-6' : 'pt-28'} pb-6 md:p-8 lg:p-12 lg:pt-12 custom-scrollbar lg:pb-12`}>
           <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000">
             {children}
           </div>
