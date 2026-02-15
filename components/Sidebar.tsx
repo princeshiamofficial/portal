@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                 className={`fixed inset-y-0 left-0 ${isCollapsed ? 'w-24' : 'w-64'} glass-sidebar flex flex-col p-6 z-[70] transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200 shadow-xl lg:shadow-none bg-white`}
             >
                 {/* Brand Logo & Toggle */}
-                <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'} mb-10 transition-all duration-300`}>
+                <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'} mb-4 transition-all duration-300`}>
                     <div className={`flex items-center gap-2 ${isCollapsed ? '' : 'flex-1 overflow-hidden'}`}>
                         {user.logo ? (
                             <img
@@ -99,23 +99,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                     </button>
                 </div>
 
-                {/* Billing Summary - Premium Mini Card */}
+                {/* Billing Summary - Organic Red Badge UI */}
                 {!isCollapsed && (
-                    <div className="mb-8 p-4 bg-slate-50 border border-slate-100 rounded-3xl group hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 hover:border-slate-200 transition-all duration-500">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-amber-500 transition-colors">
-                                <i className="fa-solid fa-receipt text-[10px]"></i>
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subscription</span>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-slate-500">Monthly</span>
-                                <span className="text-xs font-black text-slate-900 tracking-tight">1,250 ৳</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-slate-500">Discount</span>
-                                <span className="text-xs font-black text-emerald-600 tracking-tight">- 00 ৳</span>
+                    <div className="mb-2 flex items-center justify-center">
+                        <div className="pricing-badge group hover:scale-105 transition-all duration-500 cursor-pointer">
+                            <div className="relative z-10 flex flex-col items-center">
+                                <span className="text-2xl font-black text-white leading-none">৳00</span>
+                                <span className="text-[10px] font-bold text-white/70 tracking-tighter line-through decoration-white decoration-1">৳1250</span>
+                                <span className="text-[6px] font-black text-white/80 uppercase tracking-[0.2em] mt-1">monthly</span>
                             </div>
                         </div>
                     </div>

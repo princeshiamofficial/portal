@@ -115,6 +115,45 @@
       backdrop-filter: blur(10px);
       border-right: 1px solid #e2e8f0;
     }
+
+    .pricing-badge {
+      background: #e11d48;
+      border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+      width: 85px;
+      height: 85px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(-8deg);
+      box-shadow:
+        0 0 0 2px #e11d48,
+        0 0 8px rgba(225, 29, 72, 0.4),
+        0 0 0 3px rgba(225, 29, 72, 0.1);
+      position: relative;
+    }
+
+    .pricing-badge::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1.5px solid #e11d48;
+      border-radius: inherit;
+      opacity: 0.3;
+      filter: blur(1.5px);
+      transform: rotate(5deg);
+    }
+
+    .pricing-badge::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border: 1px solid #e11d48;
+      border-radius: inherit;
+      opacity: 0.5;
+      filter: blur(1px);
+      transform: rotate(-3deg);
+    }
   </style>
   <script type="importmap">
 {
