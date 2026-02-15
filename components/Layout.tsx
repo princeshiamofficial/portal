@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, User } from '../types.ts';
 import Sidebar from './Sidebar';
 
@@ -18,6 +18,15 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
     const saved = localStorage.getItem('sidebar_collapsed');
     return saved ? JSON.parse(saved) : false;
   });
+
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Reset scroll to top on view change
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo(0, 0);
+    }
+  }, [activeView]);
 
   const toggleSidebarCollapse = () => {
     setIsSidebarCollapsed((prev: boolean) => {
@@ -75,7 +84,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
         </header>
 
         {/* Main Content Area - With Entry Animations */}
-        <main className={`flex-1 overflow-y-auto relative px-4 ${activeView === View.DEVICES ? 'pt-0' : 'pt-28'} pb-6 md:p-8 lg:p-12 lg:pt-12 custom-scrollbar lg:pb-12`}>
+        <main
+          ref={mainRef}
+          className={`flex-1 overflow-y-auto relative px-4 ${activeView === View.DEVICES ? 'pt-0' : 'pt-28'} pb-6 md:p-8 lg:p-12 lg:pt-12 custom-scrollbar lg:pb-12`}
+        >
           <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000">
             {children}
           </div>
