@@ -170,16 +170,16 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                     <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Standardized responses for quick WhatsApp engagement.</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
+                <div className="flex flex-row items-center gap-2 md:gap-4">
                     <button
                         onClick={() => setShowRestoreModal(true)}
-                        className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm text-sm"
+                        className="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm text-xs sm:text-sm"
                     >
                         <i className="fa-solid fa-trash-can"></i> Trash {deletedTemplates.length > 0 && <span className="bg-slate-100 text-slate-400 px-1.5 rounded-md text-[10px] ml-1">{deletedTemplates.length}</span>}
                     </button>
                     <button
                         onClick={openCreateModal}
-                        className="px-6 py-3 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all flex items-center justify-center gap-2 text-sm"
+                        className="flex-1 px-4 py-3 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm"
                     >
                         <i className="fa-solid fa-plus"></i> Create New
                     </button>

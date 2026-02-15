@@ -113,7 +113,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
 
     return (
         <div className="p-0 md:p-8 h-full overflow-y-auto custom-scrollbar relative">
-            <div className="max-w-6xl space-y-6 md:space-y-8 pb-12 pt-6 md:pt-0 px-4 md:px-0">
+            <div className="max-w-6xl space-y-6 md:space-y-8 pb-12 pt-6 md:pt-0">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                     {/* Branding Section */}
                     <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
