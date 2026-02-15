@@ -249,7 +249,7 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
     if (isAdmin) {
         return (
             <div className="flex-1 font-['Plus_Jakarta_Sans',sans-serif]">
-                <header className="sticky top-0 z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-28 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 pt-28 md:pt-8 lg:pt-12 pb-6 md:pb-8 lg:pb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+                <header className="hidden z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-28 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 pt-28 md:pt-8 lg:pt-12 pb-6 md:pb-8 lg:pb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
                     <div>
                         <div className="flex items-center gap-2 text-slate-500 mb-2">
                             <span className="h-1 w-8 bg-slate-400 rounded-full"></span>
@@ -710,7 +710,7 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
     // --- RENDER: CUSTOMER VIEW (EXISTING) ---
     return (
         <div className="flex-1 font-['Plus_Jakarta_Sans',sans-serif]">
-            <header className="sticky top-0 z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-28 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 pt-28 md:pt-8 lg:pt-12 pb-6 md:pb-8 lg:pb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6 transition-all">
+            <header className="hidden z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-28 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 pt-28 md:pt-8 lg:pt-12 pb-6 md:pb-8 lg:pb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6 transition-all">
                 <div>
                     <div className="flex items-center gap-2 text-rose-500 mb-2">
                         <span className="h-1 w-8 bg-rose-500 rounded-full animate-pulse"></span>

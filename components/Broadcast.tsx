@@ -77,8 +77,8 @@ const Broadcast: React.FC<BroadcastProps> = ({
     return (
         <div className="flex-1">
             {/* Campaign Header */}
-            <header className="mb-8 md:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
+            <header className="mb-8 md:mb-10 flex flex-col md:flex-row md:items-center justify-end gap-6">
+                <div className="hidden">
                     <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         <span className="hover:text-red-500 cursor-pointer">Console</span>
                         <i className="fa-solid fa-chevron-right text-[8px] opacity-30"></i>
@@ -421,7 +421,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                 {/* Desktop Table View */}
                                 <div className="hidden md:block overflow-x-auto flex-1 px-8 custom-scrollbar">
                                     <table className="w-full text-left">
-                                        <thead className="sticky top-0 bg-white z-10 border-b border-slate-50">
+                                        <thead className="bg-white z-10 border-b border-slate-50">
                                             <tr className="text-[10px] uppercase tracking-widest text-slate-400">
                                                 <th className="py-5 font-bold">Contact Name</th>
                                                 {broadcastTarget === 'Users' && <th className="py-5 font-bold">Business Name</th>}

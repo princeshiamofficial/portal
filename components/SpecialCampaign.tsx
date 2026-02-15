@@ -114,7 +114,7 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
-                <div>
+                <div className="hidden">
                     <div className="flex items-center gap-2 text-red-500 mb-2">
                         <span className="h-1 w-8 bg-red-500 rounded-full"></span>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Automated Outreach</p>

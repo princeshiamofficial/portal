@@ -54,7 +54,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-red-100 rounded-full blur-[100px] opacity-40 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                 <div className="relative z-10">
                     {!isAdmin && (
-                        <div className="flex items-center gap-3 text-red-500 p-8 md:p-12 pb-6">
+                        <div className="hidden flex items-center gap-3 text-red-500 p-8 md:p-12 pb-6">
                             <span className="h-1 w-10 bg-red-500 rounded-full animate-pulse"></span>
                             <p className="text-[10px] font-black uppercase tracking-[0.2em]">Operational Overview</p>
                         </div>
