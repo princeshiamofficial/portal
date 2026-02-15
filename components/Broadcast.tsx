@@ -87,7 +87,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
                     <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Campaign Builder</h2>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
+                <div className="flex flex-row items-center gap-2 md:gap-4">
                     <input
                         type="file"
                         id="csvImport"
@@ -97,7 +97,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
                     />
                     <button
                         onClick={() => document.getElementById('csvImport')?.click()}
-                        className="px-6 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm text-sm"
+                        className="flex-1 px-4 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm text-[10px] sm:text-sm whitespace-nowrap"
                     >
                         <i className="fa-solid fa-file-csv text-emerald-500"></i>
                         <span>Import CSV</span>
@@ -105,7 +105,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
                     <button
                         onClick={() => selectedTemplateId && onStart(selectedTemplateId)}
                         disabled={sending || !selectedTemplateId || wa.status !== 'connected'}
-                        className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:translate-y-[-2px] hover:shadow-2xl shadow-slate-900/10 transition-all disabled:opacity-50 text-sm"
+                        className="flex-1 px-4 py-3.5 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:translate-y-[-2px] hover:shadow-2xl shadow-slate-900/10 transition-all disabled:opacity-50 text-[10px] sm:text-sm whitespace-nowrap"
                     >
                         <i className="fa-solid fa-paper-plane text-xs"></i>
                         <span>{sending ? 'Sending...' : 'Launch Campaign'}</span>
