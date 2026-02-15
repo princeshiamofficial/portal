@@ -112,16 +112,11 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
     };
 
     return (
-        <div className="p-8 h-full overflow-y-auto custom-scrollbar relative">
-            <div className="hidden mb-8">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Profile Settings</h1>
-                <p className="text-slate-500 mt-1">Manage your account and branding preferences</p>
-            </div>
-
-            <div className="max-w-6xl space-y-8 pb-12">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="p-4 md:p-8 h-full overflow-y-auto custom-scrollbar relative">
+            <div className="max-w-6xl space-y-6 md:space-y-8 pb-12 -mt-24 md:mt-0">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                     {/* Branding Section */}
-                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col">
+                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
                         <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center">
                                 <i className="fa-solid fa-paintbrush text-lg"></i>
@@ -131,12 +126,12 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
 
                         <div className="space-y-6 flex-1">
                             {/* Logo Upload */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-3">Sidebar Logo</label>
+                            <div className="md:block">
+                                <label className="block text-[10px] md:text-sm font-black md:font-bold uppercase md:capitalize tracking-widest md:tracking-normal text-slate-400 md:text-slate-700 mb-4 md:mb-3 ml-1 md:ml-0">Sidebar Logo</label>
                                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                                    <div className="w-32 h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center relative overflow-hidden group shrink-0">
+                                    <div className="w-32 h-32 bg-slate-50 rounded-[2rem] md:rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center relative overflow-hidden group shrink-0 shadow-inner">
                                         {logoPreview ? (
-                                            <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-contain" />
+                                            <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-contain p-2" />
                                         ) : (
                                             <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-2xl group-hover:text-violet-500 transition-colors"></i>
                                         )}
@@ -146,10 +141,10 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                                         <div className="flex flex-col gap-3">
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-colors w-fit mx-auto sm:mx-0 flex items-center gap-2"
+                                                className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all w-full sm:w-fit mx-auto sm:mx-0 flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-200"
                                             >
                                                 <i className="fa-solid fa-upload"></i>
-                                                Upload Logo
+                                                Upload Photo
                                             </button>
                                             <input
                                                 type="file"
@@ -170,7 +165,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                     </div>
 
                     {/* Account Details */}
-                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col">
+                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
                         <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
                                 <i className="fa-solid fa-user-shield text-lg"></i>
@@ -180,24 +175,24 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
 
                         <div className="space-y-6 flex-1">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Store Name</label>
+                                <label className="block text-[10px] md:text-sm font-black md:font-bold uppercase md:capitalize tracking-widest md:tracking-normal text-slate-400 md:text-slate-700 mb-2 ml-1 md:ml-0">Store Name</label>
                                 <input
                                     type="text"
                                     value={storeName}
                                     onChange={(e) => setStoreName(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold text-slate-700"
+                                    className="w-full px-5 py-4 bg-slate-50/50 md:bg-slate-50 border border-slate-100 md:border-slate-200 rounded-[1.5rem] md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 md:focus:ring-2 md:focus:ring-blue-500/20 focus:border-blue-400 md:focus:border-blue-500 font-bold md:font-semibold text-slate-700 transition-all"
                                     placeholder="Enter your store name"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Live Store Page</label>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-500 font-mono truncate">
+                                <label className="block text-[10px] md:text-sm font-black md:font-bold uppercase md:capitalize tracking-widest md:tracking-normal text-slate-400 md:text-slate-700 mb-2 ml-1 md:ml-0">Live Store Page</label>
+                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                    <div className="w-full flex-1 bg-slate-50/50 md:bg-slate-50 px-5 py-4 rounded-[1.5rem] md:rounded-xl border border-slate-100 md:border-slate-200 text-[11px] md:text-sm text-slate-500 font-mono truncate">
                                         {window.location.origin}/store?menu={user.memberId}
                                     </div>
                                     <button
                                         onClick={() => window.open(`${window.location.origin}/store?menu=${user.memberId}`, '_blank')}
-                                        className="px-4 py-3 bg-white border border-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                                        className="w-full sm:w-auto px-6 py-4 bg-white border border-slate-100 md:border-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-[1.5rem] md:rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95"
                                     >
                                         View Page
                                     </button>
@@ -205,15 +200,15 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                                 <p className="text-[10px] text-slate-400 mt-2 ml-1 italic">This page is automatically generated based on your settings.</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                                <label className="block text-[10px] md:text-sm font-black md:font-bold uppercase md:capitalize tracking-widest md:tracking-normal text-slate-400 md:text-slate-700 mb-2 ml-1 md:ml-0">Email Address</label>
                                 <div className="relative">
                                     <input
                                         type="email"
                                         value={user.email}
                                         disabled
-                                        className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-medium cursor-not-allowed pr-10"
+                                        className="w-full px-5 py-4 bg-slate-100/50 md:bg-slate-100 border border-slate-100 md:border-slate-200 rounded-[1.5rem] md:rounded-xl text-slate-400 md:text-slate-500 font-bold md:font-medium cursor-not-allowed pr-10"
                                     />
-                                    <i className="fa-solid fa-lock absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
+                                    <i className="fa-solid fa-lock absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
                                 </div>
                             </div>
                         </div>
@@ -221,7 +216,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                 </div>
 
                 {/* Security Section */}
-                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col">
+                <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col">
                     <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
                             <i className="fa-solid fa-lock text-lg"></i>
@@ -231,36 +226,36 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
 
                     <div className="space-y-6">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Current Password</label>
+                            <label className="block text-[10px] md:text-sm font-black md:font-bold uppercase md:capitalize tracking-widest md:tracking-normal text-slate-400 md:text-slate-700 mb-2 ml-1 md:ml-0">Current Password</label>
                             <div className="relative">
                                 <input
                                     type={showCurrentPass ? "text" : "password"}
                                     value={currentPassword}
                                     onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-semibold text-slate-700 pr-10"
+                                    className="w-full px-5 py-4 bg-slate-50/50 md:bg-slate-50 border border-slate-100 md:border-slate-200 rounded-[1.5rem] md:rounded-xl focus:outline-none focus:ring-4 focus:ring-rose-100 md:focus:ring-2 md:focus:ring-rose-500/20 focus:border-rose-400 md:focus:border-rose-500 font-bold md:font-semibold text-slate-700 pr-12 transition-all"
                                     placeholder="Enter current password"
                                 />
                                 <button
                                     onClick={() => setShowCurrentPass(!showCurrentPass)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                                 >
                                     <i className={`fa-solid ${showCurrentPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">New Password</label>
+                            <label className="block text-[10px] md:text-sm font-black md:font-bold uppercase md:capitalize tracking-widest md:tracking-normal text-slate-400 md:text-slate-700 mb-2 ml-1 md:ml-0">New Password</label>
                             <div className="relative">
                                 <input
                                     type={showNewPass ? "text" : "password"}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-semibold text-slate-700 pr-10"
+                                    className="w-full px-5 py-4 bg-slate-50/50 md:bg-slate-50 border border-slate-100 md:border-slate-200 rounded-[1.5rem] md:rounded-xl focus:outline-none focus:ring-4 focus:ring-rose-100 md:focus:ring-2 md:focus:ring-rose-500/20 focus:border-rose-400 md:focus:border-rose-500 font-bold md:font-semibold text-slate-700 pr-12 transition-all"
                                     placeholder="Enter new password"
                                 />
                                 <button
                                     onClick={() => setShowNewPass(!showNewPass)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                                 >
                                     <i className={`fa-solid ${showNewPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                 </button>
@@ -269,9 +264,9 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                         <button
                             onClick={handleChangePassword}
                             disabled={!currentPassword || !newPassword}
-                            className={`w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all ${!currentPassword || !newPassword
-                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                : 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-200'
+                            className={`w-full py-4 md:py-3 rounded-[1.5rem] md:rounded-xl font-black md:font-bold text-[10px] md:text-sm uppercase md:capitalize tracking-widest md:tracking-wide transition-all ${!currentPassword || !newPassword
+                                ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                                : 'bg-rose-500 text-white hover:bg-rose-600 shadow-xl shadow-rose-200 active:scale-[0.98]'
                                 }`}
                         >
                             Update Password
@@ -281,7 +276,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
 
                 {/* Store QR Code Section */}
                 {user.role?.toLowerCase() === 'user' && (
-                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
+                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm">
                         <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
                                 <i className="fa-solid fa-qrcode text-lg"></i>
@@ -337,19 +332,19 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-6 pt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-4 sm:gap-6 pt-4">
                     <button
                         onClick={() => {
                             setStoreName(user.storeName);
                             setLogoPreview(user.logo);
                         }}
-                        className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 hover:text-red-500 transition-colors"
+                        className="w-full sm:w-auto text-sm font-black uppercase tracking-[0.2em] text-slate-400 hover:text-red-500 transition-colors py-4 sm:py-0"
                     >
                         Discard Changes
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-10 py-4 bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-[11px] rounded-2xl shadow-xl shadow-slate-900/10 hover:shadow-slate-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        className="w-full sm:w-auto px-10 py-5 sm:py-4 bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-[11px] rounded-2xl shadow-xl shadow-slate-900/10 hover:shadow-slate-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                         Save Preferences
                     </button>
