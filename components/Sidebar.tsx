@@ -99,6 +99,28 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                     </button>
                 </div>
 
+                {/* Billing Summary - Premium Mini Card */}
+                {!isCollapsed && (
+                    <div className="mb-8 p-4 bg-slate-50 border border-slate-100 rounded-3xl group hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 hover:border-slate-200 transition-all duration-500">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-amber-500 transition-colors">
+                                <i className="fa-solid fa-receipt text-[10px]"></i>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subscription</span>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-500">Monthly</span>
+                                <span className="text-xs font-black text-slate-900 tracking-tight">1,250 ৳</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-500">Discount</span>
+                                <span className="text-xs font-black text-emerald-600 tracking-tight">- 00 ৳</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Navigation */}
                 <nav ref={navRef} className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
                     {navItems.map((item) => (
