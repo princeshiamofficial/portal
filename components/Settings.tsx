@@ -52,33 +52,54 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
 
     const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
+        if (!file) return;
+
+        // Validate Dimensions
+        const validateDimensions = (file: File): Promise<{ width: number, height: number }> => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    resolve({ width: img.width, height: img.height });
+                };
+                img.onerror = () => reject('Error loading image');
+                img.src = URL.createObjectURL(file);
+            });
+        };
+
+        try {
+            const { width, height } = await validateDimensions(file);
+            const reqWidth = 4900;
+            const reqHeight = 900;
+
+            if (width !== reqWidth || height !== reqHeight) {
+                alert(`Logo must be exactly ${reqWidth}x${reqHeight}px. (Current: ${width}x${height}px)`);
+                return;
+            }
+
             const token = localStorage.getItem('fm_token');
             if (!token) return;
 
             const formData = new FormData();
             formData.append('logo', file);
 
-            try {
-                const res = await fetch('/api/upload-logo', {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: formData
-                });
+            const res = await fetch('/api/upload-logo', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            });
 
-                if (res.ok) {
-                    const data = await res.json();
-                    setLogoPreview(data.logoUrl);
-                } else {
-                    const err = await res.json();
-                    alert(err.message || 'Failed to upload logo');
-                }
-            } catch (err) {
-                console.error('Logo upload error', err);
-                alert('Connection error during upload');
+            if (res.ok) {
+                const data = await res.json();
+                setLogoPreview(data.logoUrl);
+            } else {
+                const err = await res.json();
+                alert(err.message || 'Failed to upload logo');
             }
+        } catch (err) {
+            console.error('Logo upload/validation error', err);
+            alert('Error processing logo upload');
         }
     };
 
@@ -139,7 +160,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                                             />
                                             <p className="text-[11px] text-slate-400 leading-relaxed">
                                                 Supports PNG, JPG, or SVG.<br />
-                                                This logo will appear in your sidebar.
+                                                Required exact size: 4900x900px.
                                             </p>
                                         </div>
                                     </div>

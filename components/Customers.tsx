@@ -64,6 +64,8 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
     });
     const [showAddModal, setShowAddModal] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [editPassword, setEditPassword] = useState('');
+    const [showEditPassword, setShowEditPassword] = useState(false);
 
     // --- Admin Logic ---
     const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'superadmin';
@@ -110,6 +112,8 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
 
     const openEditModal = (u: AdminUser) => {
         setCurrentUser({ ...u });
+        setEditPassword('');
+        setShowEditPassword(false);
         setShowModal(true);
     };
 
@@ -132,7 +136,8 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                 whatsapp: currentUser.whatsapp,
                 address: currentUser.address,
                 seatCapacity: currentUser.seatCapacity,
-                designation: currentUser.designation
+                designation: currentUser.designation,
+                password: editPassword
             })
         });
         if (res.ok) {
@@ -261,41 +266,41 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                 </header>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="w-14 h-14 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+                    <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-3 md:gap-5 hover:shadow-md transition-all cursor-pointer group">
+                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300">
                             <i className="fa-solid fa-users"></i>
                         </div>
                         <div>
-                            <p className="text-slate-500 text-sm font-bold mb-1">Total Clients</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalUsers}</h3>
+                            <p className="text-slate-400 text-[10px] md:text-sm font-bold mb-1 uppercase tracking-wider">Clients</p>
+                            <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{stats.totalUsers}</h3>
                         </div>
                     </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-3 md:gap-5 hover:shadow-md transition-all cursor-pointer group">
+                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300">
                             <i className="fa-solid fa-user-tag"></i>
                         </div>
                         <div>
-                            <p className="text-slate-500 text-sm font-bold mb-1">End Customers</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalCustomers}</h3>
+                            <p className="text-slate-400 text-[10px] md:text-sm font-bold mb-1 uppercase tracking-wider">Customers</p>
+                            <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{stats.totalCustomers}</h3>
                         </div>
                     </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-3 md:gap-5 hover:shadow-md transition-all cursor-pointer group">
+                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300">
                             <i className="fa-solid fa-tower-broadcast"></i>
                         </div>
                         <div>
-                            <p className="text-slate-500 text-sm font-bold mb-1">System Broadcasts</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalBroadcasts}</h3>
+                            <p className="text-slate-400 text-[10px] md:text-sm font-bold mb-1 uppercase tracking-wider">Alerts</p>
+                            <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{stats.totalBroadcasts}</h3>
                         </div>
                     </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="w-14 h-14 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-3 md:gap-5 hover:shadow-md transition-all cursor-pointer group">
+                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300">
                             <i className="fa-solid fa-file-invoice"></i>
                         </div>
                         <div>
-                            <p className="text-slate-500 text-sm font-bold mb-1">Templates</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalTemplates}</h3>
+                            <p className="text-slate-400 text-[10px] md:text-sm font-bold mb-1 uppercase tracking-wider">Files</p>
+                            <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{stats.totalTemplates}</h3>
                         </div>
                     </div>
                 </div>
@@ -329,7 +334,7 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                         </div>
                         {adminLoading && <i className="fa-solid fa-circle-notch fa-spin text-slate-400 self-center"></i>}
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50/50">
                                 <tr className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
@@ -389,6 +394,54 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Admin Mobile User Cards */}
+                    <div className="lg:hidden p-4 space-y-4">
+                        {filteredAdminUsers.map(u => (
+                            <div key={u.id} className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm active:scale-[0.98] transition-all relative overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                                            <i className="fa-solid fa-store text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-900 leading-tight">{u.store_name}</h4>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">ID: #USR-{u.id}</p>
+                                        </div>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-lg font-black text-[9px] uppercase tracking-wider ${u.plan === 'Free' ? 'bg-blue-50 text-blue-600' : u.plan === 'Pro' ? 'bg-purple-50 text-purple-600' : 'bg-amber-50 text-amber-600'}`}>
+                                        {u.plan}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div className="bg-slate-50/50 p-3 rounded-xl">
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Contact</p>
+                                        <p className="text-[11px] font-bold text-slate-600 truncate">{u.whatsapp || 'N/A'}</p>
+                                    </div>
+                                    <div className="bg-slate-50/50 p-3 rounded-xl">
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Status</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                                            <p className="text-[11px] font-bold text-slate-600 capitalize">{u.status}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                    <p className="text-[10px] font-bold text-slate-400 truncate max-w-[150px]">{u.email}</p>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => openEditModal(u)} className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center active:scale-90 transition-transform">
+                                            <i className="fa-solid fa-pen text-[10px]"></i>
+                                        </button>
+                                        <button onClick={() => openDeleteModal(u)} className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center active:scale-90 transition-transform">
+                                            <i className="fa-solid fa-trash-can text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Edit Modal */}
@@ -407,7 +460,7 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                                         </button>
                                     </div>
 
-                                    <div className="max-h-[55vh] overflow-y-auto pr-3 custom-scrollbar">
+                                    <div className="max-h-[55vh] overflow-y-auto scrollbar-hide">
                                         <div className="grid grid-cols-1 gap-6">
                                             <div>
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Business Name</label>
@@ -437,6 +490,25 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                                                     className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
                                                     placeholder="e.g. 8801712345678"
                                                 />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Change Password (Leave blank to keep current)</label>
+                                                <div className="relative group">
+                                                    <input
+                                                        type={showEditPassword ? 'text' : 'password'}
+                                                        value={editPassword}
+                                                        onChange={e => setEditPassword(e.target.value)}
+                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700 pr-14"
+                                                        placeholder="Enter new password"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowEditPassword(!showEditPassword)}
+                                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors"
+                                                    >
+                                                        <i className={`fa-solid ${showEditPassword ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
@@ -562,7 +634,7 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                                     </div>
 
                                     <form onSubmit={handleAddUser} className="space-y-6">
-                                        <div className="max-h-[55vh] overflow-y-auto pr-3 custom-scrollbar">
+                                        <div className="max-h-[55vh] overflow-y-auto scrollbar-hide">
                                             <div className="grid grid-cols-1 gap-6">
                                                 <div>
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Business Name</label>
@@ -710,8 +782,9 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
     // --- RENDER: CUSTOMER VIEW (EXISTING) ---
     return (
         <div className="flex-1 font-['Plus_Jakarta_Sans',sans-serif]">
-            <header className="hidden z-30 bg-[#f8fafc]/80 backdrop-blur-md -mx-6 md:-mx-8 lg:-mx-12 -mt-28 md:-mt-8 lg:-mt-12 mb-8 md:mb-12 px-6 md:px-8 lg:px-12 pt-28 md:pt-8 lg:pt-12 pb-6 md:pb-8 lg:pb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6 transition-all">
-                <div>
+            {/* Header Section - Restored Tools with Modern UI */}
+            <div className="mb-6 md:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="hidden">
                     <div className="flex items-center gap-2 text-rose-500 mb-2">
                         <span className="h-1 w-8 bg-rose-500 rounded-full animate-pulse"></span>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Customer Database</p>
@@ -720,68 +793,58 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                     <p className="text-slate-500 mt-2 font-medium text-sm md:text-base">Full directory with direct WhatsApp contact access.</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 hover:border-rose-200 hover:bg-rose-50/30 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.03)] group"
-                        >
-                            <i className="fa-solid fa-filter text-slate-400 group-hover:text-rose-500 transition-colors"></i>
-                            <span>Filter Records</span>
-                            <i className={`fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`}></i>
-                        </button>
-
-                        {showFilters && (
-                            <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                <div className="p-2">
-                                    <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Sort By</div>
-                                    <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-50 rounded-2xl transition-all group">
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-rose-600">Recently Updated</span>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    </button>
-                                    <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 rounded-2xl transition-all group">
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Alphabetical (A-Z)</span>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    </button>
-
-                                    <div className="h-px bg-slate-100 my-2 mx-2"></div>
-
-                                    <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Filters</div>
-                                    <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 rounded-2xl transition-all group">
-                                        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
-                                            <i className="fa-solid fa-cake-candles text-xs"></i>
-                                        </div>
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-amber-700">Birthday This Month</span>
-                                    </button>
-                                    <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-2xl transition-all group">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                            <i className="fa-solid fa-briefcase text-xs"></i>
-                                        </div>
-                                        <span className="text-sm font-semibold text-slate-700 group-hover:text-emerald-700">Business Owners</span>
-                                    </button>
-                                </div>
-
-                                <div className="p-2 bg-slate-50 border-t border-slate-100">
-                                    <button className="w-full py-2.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest">
-                                        Clear All Filters
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="relative group min-w-[320px]">
-                        <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-rose-500 transition-all duration-300"></i>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-between">
+                    <div className="relative group flex-1 max-w-xl w-full">
+                        <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-rose-500 transition-all duration-300"></i>
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search name or number..."
-                            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-rose-500/5 focus:border-rose-300 outline-none transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
+                            placeholder="Find customers by name or number..."
+                            className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-100 rounded-2xl text-sm focus:ring-4 focus:ring-rose-500/5 focus:border-rose-200 outline-none transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.02)]"
                         />
                     </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="relative flex-1 sm:flex-none">
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border border-slate-100 rounded-2xl text-sm font-bold text-slate-600 hover:border-rose-100 hover:bg-rose-50/20 transition-all shadow-[0_8px_30px_rgb(0,0,0,0.02)] group"
+                            >
+                                <i className="fa-solid fa-sliders text-slate-400 group-hover:text-rose-500"></i>
+                                <span className="hidden sm:inline">Filters</span>
+                                <i className={`fa-solid fa-chevron-down text-[10px] text-slate-300 transition-transform ${showFilters ? 'rotate-180' : ''}`}></i>
+                            </button>
+
+                            {showFilters && (
+                                <div className="absolute right-0 top-full mt-3 w-64 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-2 pt-4">
+                                        <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400">Sort Records</div>
+                                        <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-50 rounded-xl transition-all group">
+                                            <span className="text-sm font-semibold text-slate-600 group-hover:text-rose-600">Active Priority</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500 opacity-0 group-hover:opacity-100 transition-all"></div>
+                                        </button>
+                                        <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 rounded-xl transition-all group">
+                                            <span className="text-sm font-semibold text-slate-600">Alphabetical List</span>
+                                        </button>
+
+                                        <div className="h-px bg-slate-50 my-2 mx-4"></div>
+
+                                        <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400">Quick Access</div>
+                                        <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 rounded-xl transition-all group">
+                                            <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600"><i className="fa-solid fa-cake-candles text-[10px]"></i></div>
+                                            <span className="text-sm font-medium text-slate-600">Birthdays</span>
+                                        </button>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/50">
+                                        <button onClick={() => setShowFilters(false)} className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500">Reset</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
-            </header>
+            </div>
 
             <div className="hidden lg:block bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -908,50 +971,61 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
             </div>
 
             {/* Mobile Card-Based View - Eye Catching */}
-            <div className="lg:hidden space-y-4">
+            <div className="lg:hidden space-y-6">
                 {paginatedCustomers.map((customer) => (
-                    <div key={customer.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.02)] relative overflow-hidden group active:scale-[0.98] transition-all">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center font-bold text-lg shadow-inner ${customer.id % 4 === 1 ? 'bg-orange-50 text-orange-500' :
-                                customer.id % 4 === 2 ? 'bg-purple-50 text-purple-500' :
-                                    customer.id % 4 === 3 ? 'bg-blue-50 text-blue-500' :
-                                        'bg-emerald-50 text-emerald-500'
+                    <div key={customer.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] relative overflow-hidden group active:scale-[0.98] transition-all">
+                        {/* Status/Badge */}
+                        <div className="absolute top-6 right-6">
+                            <span className="px-2.5 py-1 bg-slate-50 text-slate-400 rounded-lg text-[8px] font-black uppercase tracking-widest">#{customer.customer_id}</span>
+                        </div>
+
+                        <div className="flex items-center gap-5 mb-6">
+                            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center font-black text-xl shadow-inner border transition-all group-hover:rotate-3 ${customer.id % 4 === 1 ? 'bg-orange-50 text-orange-500 border-orange-100' :
+                                customer.id % 4 === 2 ? 'bg-purple-50 text-purple-500 border-purple-100' :
+                                    customer.id % 4 === 3 ? 'bg-blue-50 text-blue-500 border-blue-100' :
+                                        'bg-emerald-50 text-emerald-500 border-emerald-100'
                                 }`}>
                                 {getInitials(customer.name)}
                             </div>
-                            <div className="flex-1 overflow-hidden text-left">
-                                <h3 className="font-black text-slate-900 text-lg leading-tight truncate">{customer.name}</h3>
-                                <p className="text-xs font-bold text-slate-400 flex items-center gap-1.5 mt-0.5">
-                                    <i className="fa-solid fa-briefcase text-[10px] opacity-70"></i>
-                                    {customer.occupation}
-                                </p>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-black text-slate-800 text-xl leading-tight truncate pr-14">{customer.name}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{customer.occupation}</p>
+                                </div>
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100/50">
+                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mb-1.5">WhatsApp</p>
+                                <div className="flex items-center gap-2">
+                                    <i className="fa-solid fa-phone text-[10px] text-slate-300"></i>
+                                    <p className="text-xs font-bold text-slate-700 truncate">{customer.whatsapp}</p>
+                                </div>
+                            </div>
+                            <div className="bg-rose-50/40 p-4 rounded-[1.5rem] border border-rose-100/30">
+                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-rose-400 mb-1.5">Birthday</p>
+                                <div className="flex items-center gap-2">
+                                    <i className="fa-solid fa-cake-candles text-[10px] text-rose-300"></i>
+                                    <p className="text-xs font-bold text-rose-600 truncate">{calculateNextBirthday(customer.dob).split(',')[0]}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
                             <a
                                 href={`https://wa.me/${customer.whatsapp.replace(/\D/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-200 active:scale-90 transition-transform"
+                                className="flex-1 bg-emerald-500 text-white h-14 rounded-2xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-200 active:scale-95 transition-all"
                             >
-                                <i className="fa-brands fa-whatsapp text-xl"></i>
+                                <i className="fa-brands fa-whatsapp text-lg"></i>
+                                Message Customer
                             </a>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">WhatsApp</p>
-                                <p className="text-xs font-bold text-slate-700 truncate">{customer.whatsapp}</p>
-                            </div>
-                            <div className="bg-red-50/50 p-4 rounded-2xl border border-red-50">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-1">Birthday</p>
-                                <p className="text-xs font-bold text-red-600 truncate">{calculateNextBirthday(customer.dob).split(',')[0]}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">ID: {customer.customer_id}</p>
                             <button
                                 onClick={() => onDelete(customer.id)}
-                                className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all active:scale-95"
+                                className="w-14 h-14 flex items-center justify-center bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 border border-slate-100"
                             >
                                 <i className="fa-solid fa-trash-can text-sm"></i>
                             </button>
@@ -959,12 +1033,41 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                     </div>
                 ))}
 
+                {paginatedCustomers.length > 0 && (
+                    <div className="pt-4 pb-12 flex flex-col items-center gap-4">
+                        <div className="flex gap-3 w-full">
+                            <button
+                                onClick={() => {
+                                    setPage(p => Math.max(1, p - 1));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                disabled={page === 1}
+                                className="flex-1 py-4 bg-white border border-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 transition-all active:scale-95"
+                            >
+                                <i className="fa-solid fa-chevron-left mr-2"></i> Prev
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setPage(p => p + 1);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                disabled={page * limit >= totalResults}
+                                className="flex-1 py-4 bg-white border border-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 transition-all active:scale-95"
+                            >
+                                Next <i className="fa-solid fa-chevron-right ml-2"></i>
+                            </button>
+                        </div>
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                            Page {page} of {Math.ceil(totalResults / limit)} • {totalResults} Results
+                        </p>
+                    </div>
+                )}
                 {paginatedCustomers.length === 0 && (
                     <div className="py-20 text-center">
                         <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto mb-4">
                             <i className="fa-solid fa-users-slash text-2xl"></i>
                         </div>
-                        <p className="text-slate-500 font-bold">No customers found</p>
+                        <p className="text-slate-500 font-bold text-slate-400">No customers found</p>
                     </div>
                 )}
             </div>

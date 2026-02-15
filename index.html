@@ -60,6 +60,15 @@
       scrollbar-color: #cbd5e1 #f1f5f9;
     }
 
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     .template-card:hover .copy-btn {
       opacity: 1;
       transform: translate(0);

@@ -614,7 +614,7 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
 app.put('/api/admin/users/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { plan, role, status, name, storeName, whatsapp, address, seatCapacity, designation } = req.body;
+        const { plan, role, status, name, storeName, whatsapp, address, seatCapacity, designation, password } = req.body;
         const db = await getDb();
 
         // Check for role change to update templates
@@ -637,10 +637,18 @@ app.put('/api/admin/users/:id', authenticateToken, async (req, res) => {
             }
         }
 
+        // Update basic info
         await db.run(
             'UPDATE users SET plan = ?, role = ?, status = ?, name = ?, storeName = ?, whatsapp = ?, address = ?, seatCapacity = ?, designation = ? WHERE id = ?',
             [plan, role, status, name, storeName, whatsapp, address, seatCapacity, designation, id]
         );
+
+        // Update password if provided
+        if (password && password.trim() !== '') {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+        }
+
         res.json({ message: 'User updated' });
     } catch (error) {
         console.error(error);

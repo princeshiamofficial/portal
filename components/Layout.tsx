@@ -47,12 +47,22 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
 
       <div className={`flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300`}>
         {/* Mobile Floating Header - Eye Catching */}
-        <header className="lg:hidden fixed top-4 left-4 right-4 z-[50] bg-white/70 backdrop-blur-xl border border-white/40 px-6 py-4 rounded-[2.2rem] flex items-center justify-end shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
-          <div className="hidden flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-tr from-red-500 to-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
-              <i className="fa-solid fa-database text-white text-xs"></i>
-            </div>
-            <span className="text-xl font-black text-slate-800 tracking-tight">Food<span className="text-red-500">Mode</span></span>
+        <header className="lg:hidden fixed top-4 left-4 right-4 z-[50] bg-white/70 backdrop-blur-xl border border-white/40 px-6 py-4 rounded-[2.2rem] flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center gap-3">
+            {user.logo ? (
+              <img
+                src={user.logo}
+                alt={user.storeName}
+                className="h-10 w-auto max-w-[120px] object-contain"
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-tr from-red-500 to-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
+                  <i className="fa-solid fa-database text-white text-xs"></i>
+                </div>
+                <span className="text-xl font-black text-slate-800 tracking-tight">Food<span className="text-red-500">Mode</span></span>
+              </div>
+            )}
           </div>
           <button
             onClick={() => setIsSidebarOpen(true)}
