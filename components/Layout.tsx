@@ -57,10 +57,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
               />
             ) : (
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-tr from-red-500 to-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
-                  <i className="fa-solid fa-database text-white text-xs"></i>
-                </div>
-                <span className="text-xl font-black text-slate-800 tracking-tight">Food<span className="text-red-500">Mode</span></span>
+                <img
+                  src="https://colorhutbd.com/uploads/1771158033705-971599892.png"
+                  alt="Color Hut"
+                  className="h-10 w-auto max-w-[120px] object-contain"
+                />
+                <span className="text-xl font-black text-slate-800 tracking-tight">Color <span className="text-red-500">Hut</span></span>
               </div>
             )}
           </div>
@@ -90,7 +92,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, user, on
             </div>
             <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-4">Account Disabled</h3>
             <p className="text-slate-500 font-medium mb-10 leading-relaxed px-2">
-              Your access to <span className="text-slate-900 font-bold">FoodMode</span> has been suspended. Please contact our support team.
+              Your access to <span className="text-slate-900 font-bold">Color Hut</span> has been suspended. Please contact our support team.
             </p>
             <button
               onClick={onLogout}

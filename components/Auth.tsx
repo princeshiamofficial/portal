@@ -64,11 +64,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         {/* Brand Section */}
         <div className="flex flex-col items-center lg:items-start lg:w-1/2 space-y-6 lg:space-y-8 lg:pr-12 text-center lg:text-left">
           <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="w-12 h-12 bg-gradient-to-tr from-red-500 to-orange-400 rounded-2xl flex items-center justify-center shadow-xl shadow-red-200">
-              <i className="fa-solid fa-database text-white text-xl"></i>
-            </div>
+            <img
+              src="https://colorhutbd.com/uploads/1771158033705-971599892.png"
+              alt="Color Hut"
+              className="w-12 h-12 object-contain"
+            />
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-800">
-              Food<span className="text-red-500">Mode</span> DB
+              Color <span className="text-red-500">Hut</span>
             </h1>
           </div>
 

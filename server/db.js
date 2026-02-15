@@ -197,7 +197,7 @@ export async function initDb() {
         await db.run(
             `INSERT INTO users (email, password, storeName, name, role, plan, status, memberId) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            ['admin@colorhutbd.com', hashedPassword, 'FoodMode Admin', 'Super Admin', 'superadmin', 'Pro', 'active', '000001']
+            ['admin@colorhutbd.com', hashedPassword, 'Color Hut', 'Super Admin', 'superadmin', 'Pro', 'active', '000001']
         );
     }
 
@@ -207,7 +207,7 @@ export async function initDb() {
         console.log('Seeding default templates...');
         const initialTemplates = [
             // Admin Templates
-            { title: "👋 Welcome to Foodmode", content: "Welcome to Foodmode, [name]! 🎊 We are thrilled to have [business] onboard. Your account is now active and ready to use. Login to get started!", role: 'admin' },
+            { title: "👋 Welcome to Color Hut", content: "Welcome to Color Hut, [name]! 🎊 We are thrilled to have [business] onboard. Your account is now active and ready to use. Login to get started!", role: 'admin' },
             { title: "🚀 Product Update", content: "Hey [name]! 🌟 We've just released some exciting new features for [business]. Login to your dashboard to explore the latest tools and grow your brand!", role: 'admin' },
             { title: "🗓 Subscription Renewal", content: "Hi [name], your subscription for [business] is expiring soon. Continue managing your customer relations seamlessly by renewing today. Tap below to proceed! 💳", role: 'admin' },
             { title: "⭐ Exclusive Pro Offer", content: "Hi [name]! 🎁 Special Offer for [business]! Upgrade to our Pro plan today and get a 20% discount for the next 3 months. Unlock advanced analytics and grow faster!", role: 'admin' },

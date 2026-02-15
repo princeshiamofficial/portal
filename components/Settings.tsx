@@ -103,6 +103,13 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
         }
     };
 
+    const handleResetBranding = () => {
+        if (confirm('Reset branding to Color Hut defaults?')) {
+            setStoreName('Color Hut');
+            setLogoPreview('https://colorhutbd.com/uploads/1771158033705-971599892.png');
+        }
+    };
+
     const handleSave = () => {
         onUpdateUser({
             storeName,
@@ -138,13 +145,20 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                                     </div>
 
                                     <div className="flex-1 text-center sm:text-left">
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col sm:flex-row gap-3">
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all w-full sm:w-fit mx-auto sm:mx-0 flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-200"
+                                                className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all sm:w-fit flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-200"
                                             >
                                                 <i className="fa-solid fa-upload"></i>
                                                 Upload Photo
+                                            </button>
+                                            <button
+                                                onClick={handleResetBranding}
+                                                className="px-6 py-3 bg-white border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 hover:text-red-500 transition-all sm:w-fit flex items-center justify-center gap-2 active:scale-95"
+                                            >
+                                                <i className="fa-solid fa-rotate-left"></i>
+                                                Reset Default
                                             </button>
                                             <input
                                                 type="file"

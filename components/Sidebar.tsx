@@ -76,9 +76,11 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                                 className={`${isCollapsed ? 'w-8 h-8 rounded-lg shadow-md bg-white' : 'max-h-16 w-auto max-w-full'} object-contain transition-all duration-300`}
                             />
                         ) : (
-                            <div className="w-8 h-8 bg-gradient-to-tr from-red-500 to-orange-400 rounded-lg flex items-center justify-center shadow-md group relative overflow-hidden">
-                                <i className="fa-solid fa-database text-white text-xs relative z-10"></i>
-                            </div>
+                            <img
+                                src="https://colorhutbd.com/uploads/1771158033705-971599892.png"
+                                alt="Color Hut"
+                                className={`${isCollapsed ? 'w-8 h-8 rounded-lg shadow-md bg-white' : 'max-h-14 w-auto max-w-full'} object-contain transition-all duration-300`}
+                            />
                         )}
                     </div>
 
@@ -162,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                         <div className="flex items-center gap-3 overflow-hidden text-left">
                             <div className="relative">
                                 <img
-                                    src={`https://ui-avatars.com/api/?name=${user?.storeName || 'User'}&background=0F172A&color=fff&bold=true`}
+                                    src={`https://ui-avatars.com/api/?name=${user?.storeName || 'Color Hut'}&background=0F172A&color=fff&bold=true`}
                                     className={`${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'} rounded-xl transition-all shadow-sm object-cover flex-shrink-0`}
                                     alt="User Avatar"
                                 />
@@ -170,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
 
                             {!isCollapsed && (
                                 <div className="overflow-hidden">
-                                    <p className="text-sm font-bold text-slate-800 truncate leading-tight">{user?.storeName || 'Loading...'}</p>
+                                    <p className="text-sm font-bold text-slate-800 truncate leading-tight">{user?.storeName || 'Color Hut'}</p>
                                     <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-tight mt-0.5">Active Session</p>
                                 </div>
                             )}
