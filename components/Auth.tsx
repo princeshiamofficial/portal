@@ -62,21 +62,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
       <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-12 items-center justify-center relative z-10">
         {/* Brand Section */}
-        <div className="flex flex-col items-center lg:items-start lg:w-1/2 space-y-6 lg:space-y-8 lg:pr-12 text-center lg:text-left">
-          <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="flex flex-col items-center lg:items-start lg:w-1/2 lg:pr-12 text-center lg:text-left">
+          <div className="flex items-center justify-center lg:justify-start animate-in fade-in slide-in-from-top-4 duration-700 mb-6 lg:mb-8">
             <img
               src="https://colorhutbd.com/uploads/1771158033705-971599892.png"
               alt="Color Hut"
-              className="w-12 h-12 object-contain"
+              className="w-48 lg:w-96 h-auto object-contain drop-shadow-2xl"
             />
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-800">
-              Color <span className="text-red-500">Hut</span>
-            </h1>
           </div>
 
           <div className="relative group hidden md:block lg:block">
             <div className="animate-float">
-              <div className="bg-white p-6 rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.08)] border border-white/50 max-w-sm relative z-10 transition-transform group-hover:scale-[1.02] duration-500">
+              <div className="bg-white p-0 rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.08)] border border-white/50 max-w-sm relative z-10 transition-transform group-hover:scale-[1.02] duration-500">
                 <img
                   src="https://illustrations.popsy.co/pink/shaking-hands.svg"
                   alt="Customer Relations"
@@ -88,7 +85,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             <div className="absolute -bottom-10 -right-20 w-56 h-56 bg-blue-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-30 animate-pulse delay-700"></div>
           </div>
 
-          <div className="space-y-4 max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="hidden lg:block space-y-4 max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-1000">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.1]">
               Your{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
@@ -103,7 +100,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         </div>
 
         {/* Auth Card */}
-        <div className="w-full max-w-[500px] lg:w-[480px] bg-white/80 backdrop-blur-2xl p-8 md:p-12 rounded-[3.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.08)] border border-white relative overflow-hidden animate-in zoom-in-95 duration-700">
+        <div className="w-full max-w-[440px] lg:max-w-[500px] lg:w-[480px] bg-white lg:bg-white/80 backdrop-blur-2xl p-6 md:p-12 rounded-[2.5rem] lg:rounded-[3.5rem] shadow-2xl lg:shadow-[0_40px_100px_rgba(0,0,0,0.08)] border border-white relative overflow-hidden animate-in zoom-in-95 duration-700">
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-10">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
