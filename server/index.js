@@ -466,8 +466,8 @@ app.post('/api/whatsapp/connect', authenticateToken, async (req, res) => {
         await initializeWhatsApp(instanceId);
         res.json({ message: 'Initialization started' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error initializing WhatsApp' });
+        console.error("WHATSAPP_CONNECT_ERROR:", error.stack || error);
+        res.status(500).json({ message: 'Error initializing WhatsApp', details: error.message });
     }
 });
 

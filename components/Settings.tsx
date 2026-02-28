@@ -145,20 +145,20 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                                     </div>
 
                                     <div className="flex-1 text-center sm:text-left">
-                                        <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-4">
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all sm:w-fit flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-200"
+                                                className="w-24 h-24 md:w-28 md:h-28 bg-slate-900 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-[1rem] md:rounded-2xl hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-200 shrink-0"
                                             >
-                                                <i className="fa-solid fa-upload"></i>
-                                                Upload Photo
+                                                <i className="fa-solid fa-upload text-base md:text-lg"></i>
+                                                <span className="text-center leading-relaxed">UPLOAD<br />PHOTO</span>
                                             </button>
                                             <button
                                                 onClick={handleResetBranding}
-                                                className="px-6 py-3 bg-white border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 hover:text-red-500 transition-all sm:w-fit flex items-center justify-center gap-2 active:scale-95"
+                                                className="w-24 h-24 md:w-28 md:h-28 bg-white border border-slate-200 text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-[1rem] md:rounded-2xl hover:bg-slate-50 hover:text-red-500 transition-all flex flex-col items-center justify-center gap-2 active:scale-95 shrink-0"
                                             >
-                                                <i className="fa-solid fa-rotate-left"></i>
-                                                Reset Default
+                                                <i className="fa-solid fa-rotate-left text-base md:text-lg"></i>
+                                                <span className="text-center leading-relaxed">RESET<br />DEFAULT</span>
                                             </button>
                                             <input
                                                 type="file"
@@ -167,9 +167,10 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                                                 accept="image/*"
                                                 onChange={handleLogoChange}
                                             />
-                                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                                            <p className="text-[9px] md:text-[10px] text-slate-400 font-medium leading-relaxed max-w-[120px]">
                                                 Supports PNG, JPG, or SVG.<br />
-                                                Required exact size: 4900x900px.
+                                                Required exact size:<br />
+                                                4900x900px.
                                             </p>
                                         </div>
                                     </div>
@@ -279,7 +280,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser }) => {
                             onClick={handleChangePassword}
                             disabled={!currentPassword || !newPassword}
                             className={`w-full py-4 md:py-3 rounded-[1.5rem] md:rounded-xl font-black md:font-bold text-[10px] md:text-sm uppercase md:capitalize tracking-widest md:tracking-wide transition-all ${!currentPassword || !newPassword
-                                ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 : 'bg-rose-500 text-white hover:bg-rose-600 shadow-xl shadow-rose-200 active:scale-[0.98]'
                                 }`}
                         >
