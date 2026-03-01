@@ -218,6 +218,16 @@ const performSend = async (instanceId, number, content) => {
     }
     const jid = formattedNumber + '@s.whatsapp.net';
 
+    // Verify number exists on WhatsApp
+    try {
+        const [result] = await socket.onWhatsApp(jid);
+        if (!result || !result.exists) {
+            throw new Error(`Number ${formattedNumber} is not registered on WhatsApp`);
+        }
+    } catch (err) {
+        throw new Error(`Number ${formattedNumber} is not registered on WhatsApp`);
+    }
+
     // Human-like typing (Anti-ban mechanism)
     try {
         await socket.sendPresenceUpdate('composing', jid);

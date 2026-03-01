@@ -666,19 +666,25 @@ const App: React.FC = () => {
       if (broadcastDesignation !== 'All') {
         filteredUsers = systemUsers.filter(u => u.designation === broadcastDesignation);
       }
-      setBroadcastContacts(filteredUsers.map(u => ({
-        name: u.name || u.store_name || 'User',
-        phone: u.whatsapp || '',
-        status: 'Pending',
-        business: u.store_name || ''
-      })));
+      setBroadcastContacts(prev => {
+        const statuses = new Map(prev.map(p => [p.phone, p.status]));
+        return filteredUsers.map(u => ({
+          name: u.name || u.store_name || 'User',
+          phone: u.whatsapp || '',
+          status: statuses.get(u.whatsapp || '') || 'Pending',
+          business: u.store_name || ''
+        }));
+      });
     } else {
-      setBroadcastContacts(customers.map(c => ({
-        name: c.name,
-        phone: c.whatsapp,
-        status: 'Pending',
-        business: user?.storeName || ''
-      })));
+      setBroadcastContacts(prev => {
+        const statuses = new Map(prev.map(p => [p.phone, p.status]));
+        return customers.map(c => ({
+          name: c.name,
+          phone: c.whatsapp,
+          status: statuses.get(c.whatsapp) || 'Pending',
+          business: user?.storeName || ''
+        }));
+      });
     }
   }, [customers, systemUsers, broadcastTarget, broadcastDesignation, user]);
 

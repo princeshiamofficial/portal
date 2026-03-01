@@ -32,6 +32,8 @@ const Broadcast: React.FC<BroadcastProps> = ({
     const [showFinishedPopup, setShowFinishedPopup] = useState(false);
     const [lastSendingState, setLastSendingState] = useState(false);
     const [csvCountryCode, setCsvCountryCode] = useState('+880');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 50;
 
     // Watch for campaign completion
     React.useEffect(() => {
@@ -53,6 +55,18 @@ const Broadcast: React.FC<BroadcastProps> = ({
         if (currentFilter === 'Success') return contacts.filter(c => c.status === 'Sent');
         return contacts;
     }, [contacts, currentFilter]);
+
+    // Reset pagination to 1 when filter/contacts change
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [currentFilter, contacts]);
+
+    const paginatedContacts = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredContacts.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredContacts, currentPage]);
+
+    const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
 
     const successRate = useMemo(() => {
         const sent = contacts.filter(c => c.status === 'Sent').length;
@@ -421,7 +435,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {filteredContacts.map((contact, idx) => (
+                                            {paginatedContacts.map((contact, idx) => (
                                                 <tr key={idx} className="group hover:bg-slate-50/50 transition-all font-sans">
                                                     {!isCsvImported && (
                                                         <td className="py-5">
@@ -468,7 +482,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
 
                                 {/* Mobile Queue Cards - Eye Catching */}
                                 <div className="md:hidden space-y-3 px-6 pb-6 overflow-y-auto max-h-[400px] custom-scrollbar">
-                                    {filteredContacts.map((contact, idx) => (
+                                    {paginatedContacts.map((contact, idx) => (
                                         <div key={idx} className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
                                             <div className="flex items-center gap-3 text-left">
                                                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-bold text-xs text-slate-400 shadow-sm">
@@ -488,11 +502,35 @@ const Broadcast: React.FC<BroadcastProps> = ({
                             </>
                         )}
 
-                        <div className="p-8 pt-4 border-t border-slate-50 bg-slate-50/30 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <div className="p-8 pt-4 border-t border-slate-50 bg-slate-50/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hidden sm:block">
                                 Processing {contacts.length} Contacts
                             </span>
-                            <div className="flex items-center gap-2">
+
+                            {/* Pagination Controls */}
+                            {contacts.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    >
+                                        <i className="fa-solid fa-chevron-left text-xs"></i>
+                                    </button>
+                                    <span className="text-xs font-bold text-slate-500 px-2 min-w-[60px] text-center">
+                                        {currentPage} / {Math.max(1, totalPages)}
+                                    </span>
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage >= totalPages || totalPages === 0}
+                                        className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    >
+                                        <i className="fa-solid fa-chevron-right text-xs"></i>
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-2 mt-2 sm:mt-0">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></div>
                                 <span className="text-[10px] font-bold text-emerald-600 uppercase">Live Queue</span>
                             </div>
