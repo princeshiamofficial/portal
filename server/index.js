@@ -9,6 +9,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import compression from 'compression';
+import helmet from 'helmet';
 import { initDb, getDb } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +55,17 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
+
+// Production safety middleware
+if (process.env.NODE_ENV === 'production') {
+    app.use(helmet({
+        contentSecurityPolicy: false, // Too aggressive for Vite built assets by default
+        crossOriginEmbedderPolicy: false, // Required to load external images (UI avatars, QR codes)
+        crossOriginResourcePolicy: false, // Required if serving assets to other domains
+    }));
+    app.use(compression());
+}
+
 app.use(bodyParser.json({ limit: '100mb' })); // Increased limit for media uploads
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/uploads', express.static(UPLOADS_DIR));
