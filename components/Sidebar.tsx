@@ -118,7 +118,11 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            onClick={onClose}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (onClose) onClose();
+                                window.location.href = item.path;
+                            }}
                             title={isCollapsed ? item.label : ''}
                             className={({ isActive }) =>
                                 `flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-4'} py-3 rounded-xl transition-all duration-300 group relative ${isActive
@@ -204,7 +208,11 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, qrCode, isOpen, onClo
                                 <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Account</div>
                                 <NavLink
                                     to="/settings"
-                                    onClick={() => setProfileOpen(false)}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setProfileOpen(false);
+                                        window.location.href = '/settings';
+                                    }}
                                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-2xl transition-all group text-left"
                                 >
                                     <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:text-slate-900 transition-transform">

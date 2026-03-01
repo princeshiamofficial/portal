@@ -7,7 +7,7 @@ interface BroadcastProps {
     wa: WhatsAppSession;
     stats: BroadcastStats;
     onStart: (templateId: number) => void;
-    onImportCSV: (file: File) => void;
+    onImportCSV: (file: File, countryCode?: string) => void;
     sending: boolean;
     user?: User | null;
     systemUsers?: any[];
@@ -15,12 +15,13 @@ interface BroadcastProps {
     setBroadcastTarget: (t: 'Customers' | 'Users') => void;
     broadcastDesignation: string;
     setBroadcastDesignation: (d: string) => void;
+    isCsvImported?: boolean;
 }
 
 const Broadcast: React.FC<BroadcastProps> = ({
     templates, contacts, wa, stats, onStart, onImportCSV, sending, user,
     systemUsers, broadcastTarget, setBroadcastTarget,
-    broadcastDesignation, setBroadcastDesignation
+    broadcastDesignation, setBroadcastDesignation, isCsvImported
 }) => {
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const [templateSearch, setTemplateSearch] = useState('');
@@ -30,6 +31,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
     const [currentFilter, setCurrentFilter] = useState<'All' | 'Pending' | 'Success'>('All');
     const [showFinishedPopup, setShowFinishedPopup] = useState(false);
     const [lastSendingState, setLastSendingState] = useState(false);
+    const [csvCountryCode, setCsvCountryCode] = useState('+880');
 
     // Watch for campaign completion
     React.useEffect(() => {
@@ -89,11 +91,23 @@ const Broadcast: React.FC<BroadcastProps> = ({
 
                 <div className="flex flex-row items-center gap-2 md:gap-4">
                     <input
+                        type="text"
+                        placeholder="Code (+880)"
+                        value={csvCountryCode}
+                        onChange={(e) => setCsvCountryCode(e.target.value)}
+                        className="px-4 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl focus:outline-none focus:border-red-500 shadow-sm text-sm w-32"
+                    />
+                    <input
                         type="file"
                         id="csvImport"
                         accept=".csv"
                         className="hidden"
-                        onChange={(e) => e.target.files && onImportCSV(e.target.files[0])}
+                        onChange={(e) => {
+                            if (e.target.files?.length) {
+                                onImportCSV(e.target.files[0], csvCountryCode);
+                                e.target.value = ''; // Reset input to allow re-importing same file if needed
+                            }
+                        }}
                     />
                     <button
                         onClick={() => document.getElementById('csvImport')?.click()}
@@ -118,7 +132,7 @@ const Broadcast: React.FC<BroadcastProps> = ({
                 {[
                     { label: 'Recipients', value: contacts.length.toLocaleString(), icon: 'fa-users', color: 'text-blue-500', bg: 'bg-blue-500/10' },
                     { label: 'Daily Limit', value: '5,000', icon: 'fa-chart-pie', color: 'text-rose-500', bg: 'bg-rose-500/10' },
-                    { label: 'Safety Buffer', value: '3-7s', icon: 'fa-shield-halved', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { label: 'Safety Buffer', value: '3-5s', icon: 'fa-shield-halved', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
                     { label: 'Success Rate', value: successRate, icon: 'fa-bullseye', color: 'text-purple-500', bg: 'bg-purple-500/10' }
                 ].map((stat, i) => (
                     <div key={i} className="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-slate-50 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-3 md:gap-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
@@ -400,8 +414,8 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                     <table className="w-full text-left">
                                         <thead className="bg-white z-10 border-b border-slate-50">
                                             <tr className="text-[10px] uppercase tracking-widest text-slate-400">
-                                                <th className="py-5 font-bold">Contact Name</th>
-                                                {broadcastTarget === 'Users' && <th className="py-5 font-bold">Business Name</th>}
+                                                {!isCsvImported && <th className="py-5 font-bold">Contact Name</th>}
+                                                {broadcastTarget === 'Users' && !isCsvImported && <th className="py-5 font-bold">Business Name</th>}
                                                 <th className="py-5 font-bold">WhatsApp</th>
                                                 <th className="py-5 font-bold text-right">Delivery Status</th>
                                             </tr>
@@ -409,15 +423,17 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                         <tbody className="divide-y divide-slate-50">
                                             {filteredContacts.map((contact, idx) => (
                                                 <tr key={idx} className="group hover:bg-slate-50/50 transition-all font-sans">
-                                                    <td className="py-5">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-500 group-hover:bg-white group-hover:shadow-sm">
-                                                                {contact.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                                    {!isCsvImported && (
+                                                        <td className="py-5">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-500 group-hover:bg-white group-hover:shadow-sm">
+                                                                    {contact.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                                                </div>
+                                                                <p className="font-bold text-slate-700 text-sm tracking-tight">{contact.name}</p>
                                                             </div>
-                                                            <p className="font-bold text-slate-700 text-sm tracking-tight">{contact.name}</p>
-                                                        </div>
-                                                    </td>
-                                                    {broadcastTarget === 'Users' && (
+                                                        </td>
+                                                    )}
+                                                    {broadcastTarget === 'Users' && !isCsvImported && (
                                                         <td className="py-5">
                                                             <span className="text-xs font-semibold text-slate-600">
                                                                 {contact.business || <span className="text-slate-300 italic">N/A</span>}
@@ -456,11 +472,11 @@ const Broadcast: React.FC<BroadcastProps> = ({
                                         <div key={idx} className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
                                             <div className="flex items-center gap-3 text-left">
                                                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-bold text-xs text-slate-400 shadow-sm">
-                                                    {contact.name[0]}
+                                                    {isCsvImported ? <i className="fa-solid fa-phone"></i> : contact.name[0]}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-slate-800 text-sm">{contact.name}</p>
-                                                    <p className="text-[10px] text-slate-400 font-mono">{contact.phone}</p>
+                                                    {!isCsvImported && <p className="font-bold text-slate-800 text-sm">{contact.name}</p>}
+                                                    <p className={`font-mono ${isCsvImported ? 'text-slate-800 text-sm font-bold' : 'text-[10px] text-slate-400'}`}>{contact.phone}</p>
                                                 </div>
                                             </div>
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${contact.status === 'Pending' ? 'bg-white text-slate-200' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 animate-in zoom-in duration-300'}`}>

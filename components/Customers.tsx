@@ -447,148 +447,156 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                 {/* Edit Modal */}
                 {
                     showModal && currentUser && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                            <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200">
-                                <div className="p-10">
-                                    <div className="flex justify-between items-center mb-10">
-                                        <div>
-                                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Edit Customer</h3>
-                                            <p className="text-slate-500 text-sm font-medium">Modifying {currentUser.store_name}</p>
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 md:p-8 animate-in zoom-in-95 duration-200">
+                                <div className="flex items-start justify-between mb-8">
+                                    <div className="flex gap-4 items-center">
+                                        <div className="w-14 h-14 rounded-2xl bg-[#ffebf0] flex items-center justify-center text-[#e81f64] shrink-0">
+                                            <i className="fa-regular fa-user text-2xl"></i>
                                         </div>
-                                        <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
-                                            <i className="fa-solid fa-xmark"></i>
-                                        </button>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-800">Edit Customer</h3>
+                                            <p className="text-sm text-slate-500 mt-1">Modifying {currentUser.store_name}</p>
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="text-slate-500 hover:text-slate-700 transition-colors p-1"
+                                    >
+                                        <i className="fa-solid fa-xmark text-lg"></i>
+                                    </button>
+                                </div>
 
-                                    <div className="max-h-[55vh] overflow-y-auto scrollbar-hide">
-                                        <div className="grid grid-cols-1 gap-6">
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Business Name</label>
+                                <div className="max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
+                                    <div className="grid grid-cols-1 gap-5">
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">Business Name</label>
+                                            <input
+                                                type="text"
+                                                value={currentUser.store_name}
+                                                onChange={e => setCurrentUser({ ...currentUser, store_name: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">Name</label>
+                                            <input
+                                                type="text"
+                                                value={currentUser.name}
+                                                onChange={e => setCurrentUser({ ...currentUser, name: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                placeholder="Full Name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">WhatsApp Number</label>
+                                            <input
+                                                type="text"
+                                                value={currentUser.whatsapp || ''}
+                                                onChange={e => setCurrentUser({ ...currentUser, whatsapp: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                placeholder="e.g. 8801712345678"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">Change Password (Leave blank to keep current)</label>
+                                            <div className="relative group">
                                                 <input
-                                                    type="text"
-                                                    value={currentUser.store_name}
-                                                    onChange={e => setCurrentUser({ ...currentUser, store_name: e.target.value })}
-                                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
+                                                    type={showEditPassword ? 'text' : 'password'}
+                                                    value={editPassword}
+                                                    onChange={e => setEditPassword(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all pr-12"
+                                                    placeholder="Enter new password"
                                                 />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={currentUser.name}
-                                                    onChange={e => setCurrentUser({ ...currentUser, name: e.target.value })}
-                                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                    placeholder="Full Name"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">WhatsApp Number</label>
-                                                <input
-                                                    type="text"
-                                                    value={currentUser.whatsapp || ''}
-                                                    onChange={e => setCurrentUser({ ...currentUser, whatsapp: e.target.value })}
-                                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                    placeholder="e.g. 8801712345678"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Change Password (Leave blank to keep current)</label>
-                                                <div className="relative group">
-                                                    <input
-                                                        type={showEditPassword ? 'text' : 'password'}
-                                                        value={editPassword}
-                                                        onChange={e => setEditPassword(e.target.value)}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700 pr-14"
-                                                        placeholder="Enter new password"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowEditPassword(!showEditPassword)}
-                                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors"
-                                                    >
-                                                        <i className={`fa-solid ${showEditPassword ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Designation</label>
-                                                    <select
-                                                        value={currentUser.designation || ''}
-                                                        onChange={e => setCurrentUser({ ...currentUser, designation: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
-                                                    >
-                                                        <option value="">Select Designation</option>
-                                                        <option value="Owner">Owner</option>
-                                                        <option value="Manager">Manager</option>
-                                                        <option value="Chief">Chief</option>
-                                                        <option value="Others">Others</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Seat Capacity</label>
-                                                    <input
-                                                        type="number"
-                                                        value={currentUser.seatCapacity || ''}
-                                                        onChange={e => setCurrentUser({ ...currentUser, seatCapacity: parseInt(e.target.value) || 0 })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                        placeholder="e.g. 50"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Physical Address</label>
-                                                <input
-                                                    type="text"
-                                                    value={currentUser.address || ''}
-                                                    onChange={e => setCurrentUser({ ...currentUser, address: e.target.value })}
-                                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                    placeholder="Full street address"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Role</label>
-                                                    <select
-                                                        value={currentUser.role}
-                                                        onChange={e => setCurrentUser({ ...currentUser, role: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
-                                                    >
-                                                        <option value="user">User (Store)</option>
-                                                        <option value="admin">Admin</option>
-                                                        <option value="superadmin">SuperAdmin</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Plan</label>
-                                                    <select
-                                                        value={currentUser.plan}
-                                                        onChange={e => setCurrentUser({ ...currentUser, plan: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
-                                                    >
-                                                        <option value="Free">Free</option>
-                                                        <option value="Pro">Pro</option>
-                                                        <option value="Enterprise">Enterprise</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Access Status</label>
-                                                <select
-                                                    value={currentUser.status}
-                                                    onChange={e => setCurrentUser({ ...currentUser, status: e.target.value })}
-                                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowEditPassword(!showEditPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
                                                 >
-                                                    <option value="active">Active Access</option>
-                                                    <option value="disabled">Disabled Access</option>
+                                                    <i className={`fa-solid ${showEditPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Designation</label>
+                                                <select
+                                                    value={currentUser.designation || ''}
+                                                    onChange={e => setCurrentUser({ ...currentUser, designation: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                                >
+                                                    <option value="">Select Designation</option>
+                                                    <option value="Owner">Owner</option>
+                                                    <option value="Manager">Manager</option>
+                                                    <option value="Chief">Chief</option>
+                                                    <option value="Others">Others</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Seat Capacity</label>
+                                                <input
+                                                    type="number"
+                                                    value={currentUser.seatCapacity || ''}
+                                                    onChange={e => setCurrentUser({ ...currentUser, seatCapacity: parseInt(e.target.value) || 0 })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                    placeholder="e.g. 50"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">Physical Address</label>
+                                            <input
+                                                type="text"
+                                                value={currentUser.address || ''}
+                                                onChange={e => setCurrentUser({ ...currentUser, address: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                placeholder="Full street address"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Role</label>
+                                                <select
+                                                    value={currentUser.role}
+                                                    onChange={e => setCurrentUser({ ...currentUser, role: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                                >
+                                                    <option value="user">User (Store)</option>
+                                                    <option value="admin">Admin</option>
+                                                    <option value="superadmin">SuperAdmin</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Plan</label>
+                                                <select
+                                                    value={currentUser.plan}
+                                                    onChange={e => setCurrentUser({ ...currentUser, plan: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                                >
+                                                    <option value="Free">Free</option>
+                                                    <option value="Pro">Pro</option>
+                                                    <option value="Enterprise">Enterprise</option>
                                                 </select>
                                             </div>
                                         </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">Access Status</label>
+                                            <select
+                                                value={currentUser.status}
+                                                onChange={e => setCurrentUser({ ...currentUser, status: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                            >
+                                                <option value="active">Active Access</option>
+                                                <option value="disabled">Disabled Access</option>
+                                            </select>
+                                        </div>
                                     </div>
+                                </div>
 
+                                <div className="pt-6">
                                     <button
                                         onClick={updateUser}
-                                        className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all mt-4"
+                                        className="w-full py-3.5 bg-[#e81f64] hover:bg-[#d41c5a] text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                                     >
                                         Save Platform Changes
                                     </button>
@@ -620,158 +628,166 @@ const Customers: React.FC<CustomersProps> = ({ customers, loading, onDelete, use
                 {/* Add User Modal */}
                 {
                     showAddModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                            <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200">
-                                <div className="p-10">
-                                    <div className="flex justify-between items-center mb-10">
-                                        <div>
-                                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Add New Customer</h3>
-                                            <p className="text-slate-500 text-sm font-medium">Provision a new customer account.</p>
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 md:p-8 animate-in zoom-in-95 duration-200">
+                                <div className="flex items-start justify-between mb-8">
+                                    <div className="flex gap-4 items-center">
+                                        <div className="w-14 h-14 rounded-2xl bg-[#ffebf0] flex items-center justify-center text-[#e81f64] shrink-0">
+                                            <i className="fa-regular fa-user text-2xl"></i>
                                         </div>
-                                        <button onClick={() => setShowAddModal(false)} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
-                                            <i className="fa-solid fa-xmark"></i>
-                                        </button>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-800">Add New Customer</h3>
+                                            <p className="text-sm text-slate-500 mt-1">Provision a new customer account</p>
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => setShowAddModal(false)}
+                                        className="text-slate-500 hover:text-slate-700 transition-colors p-1"
+                                    >
+                                        <i className="fa-solid fa-xmark text-lg"></i>
+                                    </button>
+                                </div>
 
-                                    <form onSubmit={handleAddUser} className="space-y-6">
-                                        <div className="max-h-[55vh] overflow-y-auto scrollbar-hide">
-                                            <div className="grid grid-cols-1 gap-6">
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Business Name</label>
+                                <form onSubmit={handleAddUser} className="space-y-5">
+                                    <div className="max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
+                                        <div className="grid grid-cols-1 gap-5">
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Business Name</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={newUser.storeName}
+                                                    onChange={e => setNewUser({ ...newUser, storeName: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                    placeholder="e.g. Color Hut"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Name</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={newUser.name}
+                                                    onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                    placeholder="Full Name"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">WhatsApp Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={newUser.whatsapp}
+                                                    onChange={e => setNewUser({ ...newUser, whatsapp: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                    placeholder="e.g. 8801712345678"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Email Address</label>
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    value={newUser.email}
+                                                    onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                    placeholder="admin@colorhutbd.com"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Password</label>
+                                                <div className="relative group">
                                                     <input
-                                                        type="text"
+                                                        type={showPassword ? 'text' : 'password'}
                                                         required
-                                                        value={newUser.storeName}
-                                                        onChange={e => setNewUser({ ...newUser, storeName: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                        placeholder="e.g. Color Hut"
+                                                        value={newUser.password}
+                                                        onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all pr-12"
+                                                        placeholder="••••••••"
                                                     />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                                                    >
+                                                        <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="text-sm font-medium text-slate-800 mb-2 block">Designation</label>
+                                                    <select
+                                                        value={newUser.designation}
+                                                        onChange={e => setNewUser({ ...newUser, designation: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                                    >
+                                                        <option value="">Select Designation</option>
+                                                        <option value="Owner">Owner</option>
+                                                        <option value="Manager">Manager</option>
+                                                        <option value="Chief">Chief</option>
+                                                        <option value="Others">Others</option>
+                                                    </select>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Name</label>
+                                                    <label className="text-sm font-medium text-slate-800 mb-2 block">Seat Capacity</label>
                                                     <input
-                                                        type="text"
-                                                        required
-                                                        value={newUser.name}
-                                                        onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                        placeholder="Full Name"
+                                                        type="number"
+                                                        value={newUser.seatCapacity}
+                                                        onChange={e => setNewUser({ ...newUser, seatCapacity: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                        placeholder="e.g. 50"
                                                     />
                                                 </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-800 mb-2 block">Business Address</label>
+                                                <input
+                                                    type="text"
+                                                    value={newUser.address}
+                                                    onChange={e => setNewUser({ ...newUser, address: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
+                                                    placeholder="Full street address"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">WhatsApp Number</label>
-                                                    <input
-                                                        type="text"
-                                                        value={newUser.whatsapp}
-                                                        onChange={e => setNewUser({ ...newUser, whatsapp: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                        placeholder="e.g. 8801712345678"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Email Address</label>
-                                                    <input
-                                                        type="email"
-                                                        required
-                                                        value={newUser.email}
-                                                        onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                        placeholder="admin@colorhutbd.com"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Password</label>
-                                                    <div className="relative group">
-                                                        <input
-                                                            type={showPassword ? 'text' : 'password'}
-                                                            required
-                                                            value={newUser.password}
-                                                            onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700 pr-14"
-                                                            placeholder="••••••••"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowPassword(!showPassword)}
-                                                            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors"
-                                                        >
-                                                            <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Designation</label>
-                                                        <select
-                                                            value={newUser.designation}
-                                                            onChange={e => setNewUser({ ...newUser, designation: e.target.value })}
-                                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
-                                                        >
-                                                            <option value="">Select Designation</option>
-                                                            <option value="Owner">Owner</option>
-                                                            <option value="Manager">Manager</option>
-                                                            <option value="Chief">Chief</option>
-                                                            <option value="Others">Others</option>
-                                                        </select>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Seat Capacity</label>
-                                                        <input
-                                                            type="number"
-                                                            value={newUser.seatCapacity}
-                                                            onChange={e => setNewUser({ ...newUser, seatCapacity: e.target.value })}
-                                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                            placeholder="e.g. 50"
-                                                        />
-                                                    </div>
+                                                    <label className="text-sm font-medium text-slate-800 mb-2 block">Role</label>
+                                                    <select
+                                                        value={newUser.role}
+                                                        onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                                    >
+                                                        <option value="user">User (Store)</option>
+                                                        <option value="admin">Admin</option>
+                                                        <option value="superadmin">SuperAdmin</option>
+                                                    </select>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Business Address</label>
-                                                    <input
-                                                        type="text"
-                                                        value={newUser.address}
-                                                        onChange={e => setNewUser({ ...newUser, address: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold text-slate-700"
-                                                        placeholder="Full street address"
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Role</label>
-                                                        <select
-                                                            value={newUser.role}
-                                                            onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
-                                                        >
-                                                            <option value="user">User (Store)</option>
-                                                            <option value="admin">Admin</option>
-                                                            <option value="superadmin">SuperAdmin</option>
-                                                        </select>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Plan</label>
-                                                        <select
-                                                            value={newUser.plan}
-                                                            onChange={e => setNewUser({ ...newUser, plan: e.target.value })}
-                                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-700 appearance-none"
-                                                        >
-                                                            <option value="Free">Free</option>
-                                                            <option value="Pro">Pro</option>
-                                                            <option value="Enterprise">Enterprise</option>
-                                                        </select>
-                                                    </div>
+                                                    <label className="text-sm font-medium text-slate-800 mb-2 block">Plan</label>
+                                                    <select
+                                                        value={newUser.plan}
+                                                        onChange={e => setNewUser({ ...newUser, plan: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
+                                                    >
+                                                        <option value="Free">Free</option>
+                                                        <option value="Pro">Pro</option>
+                                                        <option value="Enterprise">Enterprise</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
 
+                                    <div className="pt-4 pb-2">
                                         <button
                                             type="submit"
-                                            className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all mt-4"
+                                            className="w-full py-3.5 bg-[#e81f64] hover:bg-[#d41c5a] text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                                         >
                                             Create User Account
                                         </button>
-                                    </form>
-                                </div>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}

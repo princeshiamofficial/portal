@@ -343,36 +343,40 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
 
             {/* Template Selector Modal */}
             {showSelector && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowSelector(null)}></div>
-                    <div className="relative bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-300">
-                        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-                            <div>
-                                <h4 className="text-2xl font-black text-slate-900 tracking-tight capitalize">Select {showSelector} Template</h4>
-                                <p className="text-slate-500 text-sm font-medium mt-1">Choose which message format to use for this campaign.</p>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 md:p-8 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+                        <div className="flex items-start justify-between mb-8 shrink-0">
+                            <div className="flex gap-4 items-center">
+                                <div className="w-14 h-14 rounded-2xl bg-[#ffebf0] flex items-center justify-center text-[#e81f64] shrink-0">
+                                    <i className="fa-regular fa-envelope text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-800 capitalize">Select {showSelector} Template</h3>
+                                    <p className="text-sm text-slate-500 mt-1">Choose which message format to use for this campaign.</p>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setShowSelector(null)}
-                                className="w-12 h-12 rounded-full bg-white text-slate-400 flex items-center justify-center hover:bg-slate-100 transition-all shadow-sm"
+                                className="text-slate-500 hover:text-slate-700 transition-colors p-1"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <i className="fa-solid fa-xmark text-lg"></i>
                             </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
+                        <div className="overflow-y-auto px-1 custom-scrollbar space-y-5">
                             {showSelector === 'schedule' && (
                                 <>
-                                    <div className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Scheduled Time</label>
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-800 mb-2 block">Scheduled Time</label>
                                         <input
                                             type="datetime-local"
                                             value={scheduleDateTime}
                                             onChange={(e) => setScheduleDateTime(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
                                             min={new Date().toISOString().slice(0, 16)}
                                         />
                                         {scheduleDateTime && (
-                                            <p className="text-xs text-blue-500 font-bold mt-2 text-right">
+                                            <p className="text-xs text-[#e81f64] font-medium mt-2">
                                                 <i className="fa-solid fa-clock mr-1"></i>
                                                 Will run on {new Date(scheduleDateTime).toLocaleString()}
                                             </p>
@@ -380,12 +384,12 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                                     </div>
 
                                     {isAdmin && (
-                                        <div className="mb-6 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
-                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Target Designation</label>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-800 mb-2 block">Target Designation</label>
                                             <select
                                                 value={selectedRole}
                                                 onChange={(e) => setSelectedRole(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all appearance-none"
                                             >
                                                 <option value="All">All Designations</option>
                                                 <option value="Owner">Owner</option>
@@ -393,7 +397,7 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                                                 <option value="Chief">Chief</option>
                                                 <option value="Others">Others</option>
                                             </select>
-                                            <p className="text-xs text-indigo-500 font-bold mt-2">
+                                            <p className="text-xs text-[#e81f64] font-medium mt-2">
                                                 <i className="fa-solid fa-filter mr-1"></i>
                                                 Campaign will be sent to {selectedRole === 'All' ? 'all users' : `${selectedRole} designations only`}
                                             </p>
@@ -408,27 +412,31 @@ const SpecialCampaign: React.FC<SpecialCampaignProps> = ({
                                     <p className="font-bold">No templates found. Go to Templates to create one.</p>
                                 </div>
                             ) : (
-                                templates.map(template => (
-                                    <button
-                                        key={template.id}
-                                        onClick={() => handleSelectTemplate(template.id)}
-                                        className="w-full text-left p-6 rounded-[2rem] border border-slate-100 hover:border-red-500 hover:bg-red-50/30 transition-all group relative overflow-hidden"
-                                    >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{template.type}</span>
-                                            <i className="fa-solid fa-chevron-right text-slate-300 group-hover:translate-x-1 group-hover:text-red-500 transition-all"></i>
-                                        </div>
-                                        <h5 className="text-lg font-bold text-slate-800 mb-1">{template.title}</h5>
-                                        <p className="text-slate-500 text-sm line-clamp-2">{template.content}</p>
-                                    </button>
-                                ))
+                                <div>
+                                    <div className="space-y-3">
+                                        {templates.map(template => (
+                                            <button
+                                                key={template.id}
+                                                onClick={() => handleSelectTemplate(template.id)}
+                                                className="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-[#e81f64] hover:bg-slate-50 transition-all group relative bg-white"
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="text-[10px] font-bold uppercase text-slate-400">{template.type}</span>
+                                                    <i className="fa-solid fa-chevron-right text-slate-300 group-hover:text-[#e81f64] transition-colors"></i>
+                                                </div>
+                                                <h5 className="text-sm font-bold text-slate-800 mb-1">{template.title}</h5>
+                                                <p className="text-slate-500 text-xs line-clamp-2">{template.content}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </div>
 
-                        <div className="p-8 border-t border-slate-50 bg-slate-50/30 flex justify-end">
+                        <div className="pt-6 mt-auto">
                             <button
                                 onClick={() => setShowSelector(null)}
-                                className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
+                                className="w-full py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium transition-colors"
                             >
                                 Cancel
                             </button>

@@ -124,19 +124,19 @@ export const initializeWhatsApp = async (instanceId, io) => {
 
     socket.ev.on('creds.update', saveCreds);
 
-    socket.ev.on('call', async (calls) => {
-        for (const call of calls) {
-            if (call.status === 'offer') {
-                try {
-                    console.log(`Rejecting call from ${call.from}`);
-                    await socket.rejectCall(call.id, call.from);
-                    await socket.sendMessage(call.from, { text: 'Sorry, this number cannot receive calls. Please send a message instead.' });
-                } catch (err) {
-                    console.error('Failed to reject call:', err);
-                }
-            }
-        }
-    });
+    //     socket.ev.on('call', async (calls) => {
+    //         for (const call of calls) {
+    //             if (call.status === 'offer') {
+    //                 try {
+    //                     console.log(`Received call from ${call.from}, not rejecting.`);
+    //                     // await socket.rejectCall(call.id, call.from);
+    //                     // await socket.sendMessage(call.from, { text: 'Sorry, this number cannot receive calls. Please send a message instead.' });
+    //                 } catch (err) {
+    //                     console.error('Error handling call:', err);
+    //                 }
+    //             }
+    //         }
+    //     });
 
     return socket;
 };
@@ -179,8 +179,8 @@ const processQueue = async (instanceId) => {
             console.error(`[Queue] Send error:`, err);
             reject(err);
         }
-        // gap between queue items (Anti-ban logic)
-        const gapDelay = Math.floor(Math.random() * 5000) + 3000;
+        // gap between queue items (Anti-ban logic) (Safety Buffer: 3-5s)
+        const gapDelay = Math.floor(Math.random() * 2000) + 3000;
         await new Promise(r => setTimeout(r, gapDelay));
     }
     isProcessing[instanceId] = false;

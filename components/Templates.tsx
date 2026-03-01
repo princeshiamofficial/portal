@@ -267,102 +267,107 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
-                    <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden p-8 animate-in fade-in zoom-in duration-200">
-                        <div className="mb-8">
-                            <div className="flex items-center justify-between mb-6">
+                    <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 md:p-8 animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-start justify-between mb-8">
+                            <div className="flex gap-4 items-center">
+                                <div className="w-14 h-14 rounded-2xl bg-[#ffebf0] flex items-center justify-center text-[#e81f64] shrink-0">
+                                    <i className="fa-regular fa-envelope text-2xl"></i>
+                                </div>
                                 <div>
-                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                                    <h3 className="text-xl font-bold text-slate-800">
                                         {modalType === 'create' ? 'Create Template' : 'Edit Template'}
                                     </h3>
-                                    <p className="text-slate-500 text-sm font-medium mt-1">Design your WhatsApp response format.</p>
+                                    <p className="text-sm text-slate-500 mt-1">Design your WhatsApp response format</p>
                                 </div>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 transition-all"
-                                >
-                                    <i className="fa-solid fa-xmark"></i>
-                                </button>
                             </div>
-
-                            {/* Tab Navigation */}
-                            <div className="flex bg-slate-50 p-1.5 rounded-2xl">
-                                <button
-                                    type="button"
-                                    onClick={() => handleTabChange('text')}
-                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'text' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    <i className="fa-solid fa-align-left text-[12px]"></i>
-                                    <span>Text</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleTabChange('image')}
-                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'image' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    <i className="fa-solid fa-image text-[12px]"></i>
-                                    <span>Image</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleTabChange('video')}
-                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'video' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    <i className="fa-solid fa-video text-[12px]"></i>
-                                    <span>Video</span>
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="text-slate-500 hover:text-slate-700 transition-colors p-1"
+                            >
+                                <i className="fa-solid fa-xmark text-lg"></i>
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
+                        {/* Tab Navigation */}
+                        <div className="flex bg-slate-50 p-1 rounded-xl mb-6 border border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('text')}
+                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'text' ? 'bg-white shadow-sm text-slate-800 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <i className="fa-solid fa-align-left text-xs"></i>
+                                <span>Text</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('image')}
+                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'image' ? 'bg-white shadow-sm text-slate-800 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <i className="fa-regular fa-image text-xs"></i>
+                                <span>Image</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('video')}
+                                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'video' ? 'bg-white shadow-sm text-slate-800 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <i className="fa-solid fa-video text-xs"></i>
+                                <span>Video</span>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-5 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Title</label>
+                                <label className="text-sm font-medium text-slate-800 mb-2 block">Template Title</label>
                                 <input
                                     type="text"
                                     value={currentTemplate.title}
                                     onChange={(e) => setCurrentTemplate({ ...currentTemplate, title: e.target.value })}
                                     required
-                                    className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all"
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
                                     placeholder="e.g., Welcome Greeting"
                                 />
                             </div>
 
                             {activeTab === 'text' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Message Content</label>
+                                        <label className="text-sm font-medium text-slate-800 mb-2 block">Message Content</label>
                                         <textarea
                                             value={currentTemplate.content}
                                             onChange={(e) => setCurrentTemplate({ ...currentTemplate, content: e.target.value })}
-                                            rows={8}
-                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all resize-none font-sans"
-                                            placeholder="Write your message here... Use [name] for recipient."
+                                            rows={5}
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all resize-none"
+                                            placeholder="Write your message here..."
                                         ></textarea>
-                                        <p className="text-[10px] text-slate-400 mt-2 ml-1">Use <code className="bg-slate-100 px-1 rounded font-bold">[name]</code> for recipient name and <code className="bg-slate-100 px-1 rounded font-bold">[business]</code> for store name.</p>
+                                        <p className="text-xs text-slate-500 mt-2">Use <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700">[name]</code> for recipient name and <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700">[business]</code> for store name.</p>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'image' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Template Image</label>
+                                        <label className="text-sm font-medium text-slate-800 mb-2 block">Template Image</label>
                                         <div className="relative">
                                             {currentTemplate.imageUrl ? (
-                                                <div className="relative rounded-2xl overflow-hidden border-2 border-slate-100 aspect-video group/img shadow-sm">
+                                                <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-video group/img">
                                                     <img src={currentTemplate.imageUrl} className="w-full h-full object-cover" alt="Preview" />
                                                     <button
                                                         type="button"
                                                         onClick={() => setCurrentTemplate(prev => ({ ...prev, imageUrl: '' }))}
-                                                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover/img:opacity-100"
+                                                        className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-white/90 text-red-500 flex items-center justify-center shadow-sm hover:bg-white transition-all opacity-0 group-hover/img:opacity-100"
                                                     >
-                                                        <i className="fa-solid fa-trash-can text-xs"></i>
+                                                        <i className="fa-solid fa-trash-can text-sm"></i>
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <label className="flex flex-col items-center justify-center w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-slate-300 transition-all overflow-hidden relative">
+                                                <label className="flex flex-col items-center justify-center w-full aspect-video bg-white border border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all overflow-hidden relative">
                                                     <div className="flex flex-col items-center gap-2">
-                                                        <i className="fa-solid fa-image text-slate-400 text-2xl"></i>
-                                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Upload Image</span>
+                                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                                                            <i className="fa-solid fa-image text-lg"></i>
+                                                        </div>
+                                                        <span className="text-xs font-medium text-slate-500">Click to upload image</span>
                                                     </div>
                                                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleMediaUpload(e, 'image')} disabled={uploading} />
                                                 </label>
@@ -371,12 +376,12 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Media Caption (Optional)</label>
+                                        <label className="text-sm font-medium text-slate-800 mb-2 block">Media Caption (Optional)</label>
                                         <input
                                             type="text"
                                             value={currentTemplate.mediaCaption || ''}
                                             onChange={(e) => setCurrentTemplate({ ...currentTemplate, mediaCaption: e.target.value })}
-                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all"
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
                                             placeholder="Add a caption for your image..."
                                         />
                                     </div>
@@ -384,13 +389,12 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                             )}
 
                             {activeTab === 'video' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Video Source URL</label>
+                                        <label className="text-sm font-medium text-slate-800 mb-2 block">Video Source URL</label>
 
-                                        {/* Video Preview in Modal */}
                                         {currentTemplate.videoUrl && (
-                                            <div className="mb-4 rounded-2xl overflow-hidden border-2 border-slate-100 aspect-video bg-slate-900 relative group/vid shadow-sm">
+                                            <div className="mb-4 rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-900 relative group/vid">
                                                 <video
                                                     src={currentTemplate.videoUrl}
                                                     className="w-full h-full object-contain"
@@ -399,9 +403,9 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                                 <button
                                                     type="button"
                                                     onClick={() => setCurrentTemplate(prev => ({ ...prev, videoUrl: '' }))}
-                                                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover/vid:opacity-100 z-10"
+                                                    className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-white/90 text-red-500 flex items-center justify-center shadow-sm hover:bg-white transition-all opacity-0 group-hover/vid:opacity-100 z-10"
                                                 >
-                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                    <i className="fa-solid fa-trash-can text-sm"></i>
                                                 </button>
                                             </div>
                                         )}
@@ -410,31 +414,30 @@ const Templates: React.FC<TemplatesProps> = ({ templates, loading, onSave, onDel
                                             type="text"
                                             value={currentTemplate.videoUrl || ''}
                                             onChange={(e) => setCurrentTemplate({ ...currentTemplate, videoUrl: e.target.value })}
-                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all shadow-sm"
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
                                             placeholder="https://example.com/video.mp4"
                                         />
-                                        <p className="text-[10px] text-slate-400 mt-2 ml-1">Note: Only direct video links are supported. Paste the URL above.</p>
+                                        <p className="text-xs text-slate-500 mt-2">Only direct video links are supported.</p>
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Media Caption (Optional)</label>
+                                        <label className="text-sm font-medium text-slate-800 mb-2 block">Media Caption (Optional)</label>
                                         <input
                                             type="text"
                                             value={currentTemplate.mediaCaption || ''}
                                             onChange={(e) => setCurrentTemplate({ ...currentTemplate, mediaCaption: e.target.value })}
-                                            className="w-full px-5 py-4 bg-slate-50 border border-transparent rounded-2xl font-bold text-slate-700 outline-none focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all"
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-[#e81f64] focus:ring-1 focus:ring-[#e81f64] transition-all"
                                             placeholder="Add a caption for your video..."
                                         />
                                     </div>
                                 </div>
                             )}
 
-                            <div className="pt-4">
+                            <div className="pt-4 pb-2">
                                 <button
                                     type="submit"
-                                    className="w-full py-5 bg-slate-900 text-white rounded-2xl font-bold shadow-xl hover:bg-red-500 transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-3.5 bg-[#e81f64] hover:bg-[#d41c5a] text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <i className="fa-solid fa-paper-plane text-xs"></i>
                                     <span>{modalType === 'create' ? 'Create Template' : 'Save Changes'}</span>
                                 </button>
                             </div>

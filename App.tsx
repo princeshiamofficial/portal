@@ -32,7 +32,7 @@ const AppContent: React.FC<{
   broadcastContacts: BroadcastContact[];
   broadcastStats: BroadcastStats;
   onStartBroadcast: (tid: number) => void;
-  onImportCSV: (f: File) => void;
+  onImportCSV: (f: File, countryCode?: string) => void;
   isSending: boolean;
   campaignSettings: SpecialCampaignSettings;
   onUpdateCampaignSettings: (settings: SpecialCampaignSettings) => void;
@@ -46,6 +46,7 @@ const AppContent: React.FC<{
   onRestoreDefaults: () => void;
   isInitializing: boolean;
   onRefreshData: () => void;
+  isCsvImported: boolean;
 }> = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -116,7 +117,9 @@ const AppContent: React.FC<{
       }
     };
     validateSession();
-  }, [location.pathname, props.onLogout, props.user]);
+    // Refresh application data whenever navigating to a new page
+    props.onRefreshData();
+  }, [location.pathname, props.onLogout, props.user, props.onRefreshData]);
 
   // Public routes (No Auth required)
   if (location.pathname.startsWith('/vip')) {
@@ -204,6 +207,7 @@ const AppContent: React.FC<{
             setBroadcastTarget={props.setBroadcastTarget}
             broadcastDesignation={props.broadcastDesignation}
             setBroadcastDesignation={props.setBroadcastDesignation}
+            isCsvImported={props.isCsvImported}
           />
         } />
         <Route path="/special-campaign" element={
@@ -262,6 +266,7 @@ const App: React.FC = () => {
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const [broadcastTarget, setBroadcastTarget] = useState<'Customers' | 'Users'>('Customers');
   const [broadcastDesignation, setBroadcastDesignation] = useState<string>('All');
+  const [isCsvImported, setIsCsvImported] = useState(false);
 
   // Load session from token on mount
   useEffect(() => {
@@ -502,20 +507,32 @@ const App: React.FC = () => {
   };
 
 
-  const handleImportCSV = (file: File) => {
+  const handleImportCSV = (file: File, countryCode: string = '') => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result as string;
       const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
-      const newContacts: BroadcastContact[] = lines.slice(1).map(line => {
+      const newContacts: BroadcastContact[] = lines.map(line => {
         const parts = line.split(',');
+        const phoneCandidate = parts.find(p => /\d{8,}/.test(p)) || parts[0];
+        let phone = (phoneCandidate || line).replace(/[^0-9+]/g, '');
+
+        // Add country code if not present (only if a valid country code is provided)
+        if (countryCode && phone && !phone.startsWith(countryCode) && !phone.startsWith('+')) {
+          if (countryCode === '+880' && phone.startsWith('0')) {
+            phone = phone.substring(1); // remove leading 0 for BD numbers before appending +880
+          }
+          phone = countryCode + phone;
+        }
+
         return {
-          name: parts[0]?.trim() || 'Unknown',
-          phone: parts[1]?.trim() || 'No Phone',
-          status: 'Pending'
+          name: phone || 'No Phone',
+          phone: phone || 'No Phone',
+          status: 'Pending' as const
         };
-      });
-      setBroadcastContacts([...broadcastContacts, ...newContacts]);
+      }).filter(c => c.phone !== 'No Phone' && c.phone !== '');
+      setBroadcastContacts(newContacts);
+      setIsCsvImported(true);
     };
     reader.readAsText(file);
   };
@@ -628,8 +645,15 @@ const App: React.FC = () => {
     setIsSending(false);
   };
 
+  // Clear CSV flag if user explicitly changes targeting dropdowns
+  useEffect(() => {
+    setIsCsvImported(false);
+  }, [broadcastTarget, broadcastDesignation]);
+
   // Initially load customers into broadcast contacts
   useEffect(() => {
+    if (isCsvImported) return; // Prevent overwriting CSV imported contacts during a background refresh
+
     const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'superadmin';
 
     // Safety check: specific to admin view
@@ -695,6 +719,7 @@ const App: React.FC = () => {
         onRestoreDefaults={handleRestoreDefaults}
         isInitializing={isInitializing}
         onRefreshData={fetchData}
+        isCsvImported={isCsvImported}
       />
     </Router>
   );
